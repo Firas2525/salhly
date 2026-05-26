@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/ui_utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
@@ -674,14 +675,8 @@ class _OrderDetailWorkerViewState extends State<OrderDetailWorkerView> {
   }
 
   Future<void> _launchPhoneCall(String phoneNumber) async {
-    final cleanPhoneNumber = phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
-    final Uri phoneUri = Uri(scheme: 'tel', path: cleanPhoneNumber);
     try {
-      if (await canLaunchUrl(phoneUri)) {
-        await launchUrl(phoneUri);
-      } else {
-        showAppSnackbar('خطأ', 'لا يمكن الاتصال برقم هذا الهاتف', isError: true);
-      }
+      await dialPhoneNumber(phoneNumber);
     } catch (e) {
       showAppSnackbar('خطأ', 'فشل الاتصال', isError: true);
     }
@@ -785,7 +780,7 @@ class _OrderDetailWorkerViewState extends State<OrderDetailWorkerView> {
   }
 
   Color _getStatusColor(String status) {
-    if (status.toLowerCase().contains('pending')) return Colors.orange;
+    if (status.toLowerCase().contains('pending')) return Colors.deepOrangeAccent;
     if (status.toLowerCase().contains('approved')) return Colors.blue;
     return Colors.green;
   }

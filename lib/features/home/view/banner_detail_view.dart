@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:salhly/configs/app_colors.dart';
 import '../../home/model/bunner_model.dart';
 
@@ -13,26 +15,58 @@ class BannerDetailView extends StatelessWidget {
     final hasImage = banner.image != null && banner.image.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFC),
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: AppColors.four,
-        title: Text(
-          'تفاصيل الإعلان',
-          style: GoogleFonts.cairo(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      body:Stack(children: [
+      Positioned.fill(child: Container(color: Colors.white)),
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        height: MediaQuery.of(context).size.height * 0.35,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.blue,
+                Colors.blue.withOpacity(0.55),
+                Colors.white,
+              ],
+              stops: const [0.0, 0.6, 1.0],
+            ),
           ),
         ),
       ),
-      body: ListView(
+
+       ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Search / header
+
+          SizedBox(height: 40),
+          Row(
+            children: [
+              GestureDetector(
+                  onTap: (){
+                    Navigator.of(context).pop();
+                  },
+                  child: Icon(Icons.arrow_back, color: Colors.white, size: 28)),
+              const SizedBox(width: 12),
+              Text(
+                'تفاصيل الاعلان',
+                style: GoogleFonts.cairo(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 35),
           Container(
-            height: 260,
+            height: 200,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(5),
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
@@ -43,22 +77,29 @@ class BannerDetailView extends StatelessWidget {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(5),
               child: hasImage
-                  ? CachedNetworkImage(
-                      imageUrl:
-                          'https://www.salhly.lareenmedco.com/storage/${banner.image}',
-                      fit: BoxFit.cover,
-                      placeholder: (c, s) => Center(
-                        child: CircularProgressIndicator(color: AppColors.four),
+                  ? GestureDetector(
+                      onTap: () => _openImageViewer(
+                        context,
+                        ['https://www.salhly.lareenmedco.com/storage/${banner.image}'],
+                        0,
                       ),
-                      errorWidget: (c, s, e) => _buildLogoPlaceholder(),
+                      child: CachedNetworkImage(
+                        imageUrl:
+                            'https://www.salhly.lareenmedco.com/storage/${banner.image}',
+                        fit: BoxFit.cover,
+                        placeholder: (c, s) => Center(
+                          child: CircularProgressIndicator(color: AppColors.four),
+                        ),
+                        errorWidget: (c, s, e) => _buildLogoPlaceholder(),
+                      ),
                     )
                   : _buildLogoPlaceholder(),
             ),
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 25),
 
           Text(
             banner.title,
@@ -95,7 +136,7 @@ class BannerDetailView extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ]));
   }
 
   Widget _buildLogoPlaceholder() {
@@ -105,6 +146,43 @@ class BannerDetailView extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Image.asset('assets/images/logo2.png', fit: BoxFit.contain),
+        ),
+      ),
+    );
+  }
+
+  void _openImageViewer(BuildContext context, List<String> imageUrls, int initialIndex) {
+    if (imageUrls.isEmpty) return;
+    final imageProviders = imageUrls.map((url) => CachedNetworkImageProvider(url)).toList();
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: EdgeInsets.zero,
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            PhotoViewGallery.builder(
+              itemCount: imageProviders.length,
+              pageController: PageController(initialPage: initialIndex),
+              builder: (context, index) {
+                return PhotoViewGalleryPageOptions(
+                  imageProvider: imageProviders[index],
+                  minScale: PhotoViewComputedScale.contained,
+                  maxScale: PhotoViewComputedScale.covered * 3,
+                );
+              },
+              loadingBuilder: (context, event) => const Center(child: CircularProgressIndicator()),
+            ),
+            Positioned(
+              top: 28,
+              right: 12,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
         ),
       ),
     );

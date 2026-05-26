@@ -37,77 +37,102 @@ class _ServiceViewState extends State<ServiceView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [AppColors.four, AppColors.four.withOpacity(0.6)],
+      body: Stack(
+        children: [
+          Positioned.fill(child: Container(color: Colors.white)),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.35,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.blue,
+                    Colors.blue.withOpacity(0.55),
+                    Colors.white,
+                  ],
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+              ),
             ),
           ),
-        ),
-        title: const Text(
-          'أقسام الخدمة',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-      ),
+          GetBuilder<ServiceController>(
+            builder: (controller) {
+              final items = _search.trim().isEmpty
+                  ? controller.subServices
+                  : controller.subServices
+                        .where(
+                          (s) => s.title.toLowerCase().contains(
+                            _search.toLowerCase(),
+                          ),
+                        )
+                        .toList();
 
-      body: GetBuilder<ServiceController>(
-        builder: (controller) {
-          final items = _search.trim().isEmpty
-              ? controller.subServices
-              : controller.subServices
-                    .where(
-                      (s) =>
-                          s.title.toLowerCase().contains(_search.toLowerCase()),
+              return controller.isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.four,
+                        strokeWidth: 4,
+                      ),
                     )
-                    .toList();
-
-          return controller.isLoading
-              ? Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.four,
-                    strokeWidth: 4,
-                  ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Search / header
-                      Row(
+                  : Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Container(
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: TextField(
-                                onChanged: (v) => setState(() => _search = v),
-                                decoration: InputDecoration(
-                                  hintText: 'ابحث عن خدمة...',
-                                  prefixIcon: Icon(
-                                    Icons.search,
-                                    color: AppColors.four,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
+                          // Search / header
+
+                          SizedBox(height: 40),
+                          Row(
+                            children: [
+                              GestureDetector(
+                                  onTap: (){
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Icon(Icons.arrow_back, color: Colors.white, size: 28)),
+                              const SizedBox(width: 12),
+                              Text(
+                                'أقسام الخدمة',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
-                            ),
-                          ) /*
+                            ],
+                          ),
+                          SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: TextField(
+                                    onChanged: (v) =>
+                                        setState(() => _search = v),
+                                    decoration: InputDecoration(
+                                      hintText: 'ابحث عن خدمة...',
+                                      prefixIcon: Icon(
+                                        Icons.search,
+                                        color: AppColors.four,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 14,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ) /*
                           const SizedBox(width: 12),
                           Container(
                             height: 44,
@@ -121,141 +146,137 @@ class _ServiceViewState extends State<ServiceView> {
                               icon: const Icon(Icons.refresh, color: Colors.white),
                             ),
                           )*/,
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Title
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                        child: Text(
-                          'أقسام الخدمة',
-                          style: GoogleFonts.cairo(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+                            ],
                           ),
-                        ),
-                      ),
+                          const SizedBox(height: 14),
 
-                      // Grid of service cards
-                      Expanded(
-                        child: items.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'لم يتم العثور على خدمات',
-                                  style: GoogleFonts.cairo(),
-                                ),
-                              )
-                            : GridView.builder(
-                                padding: const EdgeInsets.only(top: 20),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 1,
-                                      crossAxisSpacing: 12,
-                                      mainAxisSpacing: 17,
-                                      childAspectRatio: 1.8,
+
+                          // Grid of service cards
+                          Expanded(
+                            child: items.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      'لم يتم العثور على خدمات',
+                                      style: GoogleFonts.cairo(),
                                     ),
-                                itemCount: items.length,
-                                itemBuilder: (context, index) {
-                                  final s = items[index];
-                                  return Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(14),
-                                      onTap: () {
-                                        Get.to(
-                                          () => ServiceOrderPage(
-                                            serviceId: controller.serviceId,
-                                            subServiceId: s.id,
-                                          ),
-                                        );
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black12,
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 6),
-                                            ),
-                                          ],
+                                  )
+                                : GridView.builder(
+                                    padding: const EdgeInsets.only(top: 20),
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 1,
+                                          crossAxisSpacing: 12,
+                                          mainAxisSpacing: 17,
+                                          childAspectRatio: 1.8,
                                         ),
-                                        child: ClipRRect(
+                                    itemCount: items.length,
+                                    itemBuilder: (context, index) {
+                                      final s = items[index];
+                                      return Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
                                           borderRadius: BorderRadius.circular(
                                             14,
                                           ),
-                                          child: Stack(
-                                            fit: StackFit.expand,
-                                            children: [
-                                              // background image
-                                              if (s.image.isNotEmpty)
-                                                Image(
-                                                  image: CachedNetworkImageProvider(
-                                                    'https://www.salhly.lareenmedco.com/storage/${s.image}',
-                                                  ),
-
-                                                  fit: BoxFit.cover,
-                                                )
-                                              else
-                                                Container(
-                                                  color: Colors.grey.shade200,
+                                          onTap: () {
+                                            Get.to(
+                                              () => ServiceOrderPage(
+                                                serviceId: controller.serviceId,
+                                                subServiceId: s.id,
+                                              ),
+                                            );
+                                          },
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black12,
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 6),
                                                 ),
+                                              ],
+                                            ),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              child: Stack(
+                                                fit: StackFit.expand,
+                                                children: [
+                                                  // background image
+                                                  if (s.image.isNotEmpty)
+                                                    Image(
+                                                      image: CachedNetworkImageProvider(
+                                                        'https://www.salhly.lareenmedco.com/storage/${s.image}',
+                                                      ),
 
-                                              // bottom gradient
-                                              Positioned(
-                                                left: 0,
-                                                right: 0,
-                                                bottom: 0,
-                                                height: 72,
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      colors: [
-                                                        Colors.black
-                                                            .withOpacity(0.6),
-                                                        Colors.transparent,
-                                                      ],
-                                                      begin: Alignment
-                                                          .bottomCenter,
-                                                      end: Alignment.topCenter,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  else
+                                                    Container(
+                                                      color:
+                                                          Colors.grey.shade200,
+                                                    ),
+
+                                                  // bottom gradient
+                                                  Positioned(
+                                                    left: 0,
+                                                    right: 0,
+                                                    bottom: 0,
+                                                    height: 72,
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        gradient: LinearGradient(
+                                                          colors: [
+                                                            Colors.black
+                                                                .withOpacity(
+                                                                  0.6,
+                                                                ),
+                                                            Colors.transparent,
+                                                          ],
+                                                          begin: Alignment
+                                                              .bottomCenter,
+                                                          end: Alignment
+                                                              .topCenter,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              ),
 
-                                              // title
-                                              Positioned(
-                                                left: 12,
-                                                bottom: 12,
-                                                right: 12,
-                                                child: Text(
-                                                  s.title,
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: GoogleFonts.cairo(
-                                                    color: Colors.white,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w700,
+                                                  // title
+                                                  Positioned(
+                                                    left: 12,
+                                                    bottom: 12,
+                                                    right: 12,
+                                                    child: Text(
+                                                      s.title,
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: GoogleFonts.cairo(
+                                                        color: Colors.white,
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
                                                   ),
-                                                ),
+                                                ],
                                               ),
-                                            ],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-        },
+                    );
+            },
+          ),
+        ],
       ),
     );
   }

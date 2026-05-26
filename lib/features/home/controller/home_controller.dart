@@ -17,11 +17,16 @@ import '../model/about_us_model.dart';
 import '../model/bunner_model.dart';
 import '../model/contact_us_model.dart';
 import '../model/service_model.dart';
+import '../model/offer_model.dart';
+import '../../notifications/model/notification.dart';
+import 'package:salhly/features/notifications/service/notifications_service.dart';
 
 class HomeController extends GetxController {
   bool isLoading = false;
   List<BannerModel> banners = [];
   List<ServicesModel> services = [];
+  List<Offer> offers = [];
+  List<Offer> exchangeOffers = [];
   TextEditingController myPhone = TextEditingController();
   TextEditingController myPassword = TextEditingController();
   TextEditingController myName = TextEditingController();
@@ -32,6 +37,25 @@ class HomeController extends GetxController {
   UserModel? user;
   PrivacyPolicyModel? privacyPolicyModel;
   File? imageFile;
+
+  bool _isInitializing = false;
+  bool _hasInitialized = false;
+
+  // App appearance values from /api/app-appearance/show
+  String appTitle = '';
+  String appTopBackground = '';
+  String appBottomBackground = '';
+  String appTabbarBackground = '';
+  String replaceTitle = '';
+  String replaceDesc = '';
+  String replaceImage = '';
+  String buyTitle = '';
+  String buyDesc = '';
+  String buyImage = '';
+
+  // Notifications
+  List<NotificationModel> notifications = [];
+  int unreadNotificationsCount = 0;
 
   pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -114,10 +138,7 @@ class HomeController extends GetxController {
     update();
   }
 
-  getAds() async {
-    isLoading = true;
-    update();
-
+  getAds({bool showError = false}) async {
     try {
       String? token = App.prefs.getString('token');
       print(token);
@@ -148,18 +169,20 @@ class HomeController extends GetxController {
         update();
         Get.offAll(() => Login());
       } else {
-        showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+        if (showError) {
+          showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+        }
       }
     } catch (e) {
       print(e);
-      showAppSnackbar(
-        "خطأ",
-        "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
-        isError: true,
-      );
+      if (showError) {
+        showAppSnackbar(
+          "خطأ",
+          "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
+          isError: true,
+        );
+      }
     }
-
-    getServices();
   }
 
   getServices() async {
@@ -198,14 +221,152 @@ class HomeController extends GetxController {
         isError: true,
       );*/
     }
+  }
 
-    getContactUs();
+  getContactUs() async {
+    try {
+      String? token = App.prefs.getString('token');
+
+      var headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Accept-Language': 'ar',
+      };
+
+      var uri = Uri.parse("${AppApi.baseUrl}/PrivacyPolicy/ContactUs");
+      var request = http.Request('GET', uri);
+
+      request.headers.addAll(headers);
+      var response = await request.send();
+
+      var data = jsonDecode(await response.stream.bytesToString());
+      print(data);
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 220) {
+        contactUsModel = ContactUsModel.fromJson(data["data"]);
+        print("ContactUs Loaded Successfully");
+      } else {
+       // showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+      }
+    } catch (e) {
+      print(e);
+     /* showAppSnackbar(
+        "خطأ",
+        "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
+        isError: true,
+      );*/
+    }
+  }
+
+  getOffers() async {
+    try {
+      var headers = {
+        'Accept': 'application/json',
+        'Accept-Language': 'en',
+      };
+      var uri = Uri.parse("https://www.salhly.lareenmedco.com/api/offers/get");
+
+      var request = http.Request('GET', uri);
+      request.headers.addAll(headers);
+      var response = await request.send();
+      var data = jsonDecode(await response.stream.bytesToString());
+
+      if (response.statusCode == 200) {
+        offers = (data['data'] as List)
+            .map((e) => Offer.fromJson(e))
+            .toList();
+        print("Offers loaded: ${offers.length}");
+        update();
+      } else {
+        print("Error loading offers: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Exception loading offers: $e");
+    }
+  }
+
+  getExchangeOffers() async {
+    try {
+      var headers = {
+        'Accept': 'application/json',
+        'Accept-Language': 'en',
+      };
+      var uri = Uri.parse("https://www.salhly.lareenmedco.com/api/offers/get_exchange");
+
+      var request = http.Request('GET', uri);
+      request.headers.addAll(headers);
+      var response = await request.send();
+      var data = jsonDecode(await response.stream.bytesToString());
+
+      if (response.statusCode == 200) {
+        exchangeOffers = (data['data'] as List)
+            .map((e) => Offer.fromJson(e))
+            .toList();
+        print("Exchange offers loaded: ${exchangeOffers.length}");
+        update();
+      } else {
+        print("Error loading exchange offers: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Exception loading exchange offers: $e");
+    }
+  }
+
+  getAppAppearance() async {
+    try {
+      String? token = App.prefs.getString('token');
+      var headers = {
+        'Accept': 'application/json',
+        'Accept-Language': 'en',
+      };
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      var uri = Uri.parse('https://www.salhly.lareenmedco.com/api/app-appearance/show');
+      var request = http.Request('GET', uri);
+      request.headers.addAll(headers);
+      var response = await request.send();
+      var data = jsonDecode(await response.stream.bytesToString());
+
+      if (response.statusCode == 200 && data['data'] != null) {
+        final appData = data['data'];
+        appTitle = appData['title'] ?? '';
+        appTopBackground = appData['top_background'] ?? '';
+        appBottomBackground = appData['bottom_background'] ?? '';
+        appTabbarBackground = appData['tabbar_background'] ?? '';
+
+        replaceTitle = appData['replace']?['title'] ?? '';
+        replaceDesc = appData['replace']?['desc'] ?? '';
+        replaceImage = appData['replace']?['image'] ?? '';
+
+        buyTitle = appData['buy']?['title'] ?? '';
+        buyDesc = appData['buy']?['desc'] ?? '';
+        buyImage = appData['buy']?['image'] ?? '';
+
+        await App.prefs.setString('app_title', appTitle);
+        await App.prefs.setString('app_top_background', appTopBackground);
+        await App.prefs.setString('app_bottom_background', appBottomBackground);
+        await App.prefs.setString('app_tabbar_background', appTabbarBackground);
+        await App.prefs.setString('app_replace_title', replaceTitle);
+        await App.prefs.setString('app_replace_desc', replaceDesc);
+        await App.prefs.setString('app_replace_image', replaceImage);
+        await App.prefs.setString('app_buy_title', buyTitle);
+        await App.prefs.setString('app_buy_desc', buyDesc);
+        await App.prefs.setString('app_buy_image', buyImage);
+
+        update();
+      } else {
+        print('Error loading app appearance: ${response.statusCode} ${data['message'] ?? ''}');
+      }
+    } catch (e) {
+      print('Exception loading app appearance: $e');
+    }
   }
 
   getAboutUs() async {
-    isLoading = true;
-    update();
-
     try {
       String? token = App.prefs.getString('token');
 
@@ -240,9 +401,6 @@ class HomeController extends GetxController {
         isError: true,
       );*/
     }
-
-    isLoading = false;
-    update();
   }
 
   getUser() async {
@@ -285,47 +443,25 @@ class HomeController extends GetxController {
         isError: true,
       );*/
     }
-
-    isLoading = false;
-    update();
   }
 
-  getContactUs() async {
+  Future<NotificationsResponse?> getNotifications({int page = 1, int perPage = 10, bool reset = true}) async {
     try {
-      String? token = App.prefs.getString('token');
-
-      var headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-        'Accept-Language': 'ar',
-      };
-
-      var uri = Uri.parse("${AppApi.baseUrl}/PrivacyPolicy/ContactUs");
-      var request = http.Request('GET', uri);
-
-      request.headers.addAll(headers);
-      var response = await request.send();
-
-      var data = jsonDecode(await response.stream.bytesToString());
-      print(data);
-
-      if (response.statusCode == 200 ||
-          response.statusCode == 201 ||
-          response.statusCode == 220) {
-        contactUsModel = ContactUsModel.fromJson(data["data"]);
-        print("ContactUs Loaded Successfully");
-      } else {
-       // showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+      final response = await NotificationsService().getNotifications(page: page, perPage: perPage);
+      if (response != null) {
+        if (reset) {
+          notifications = response.data;
+        } else {
+          notifications.addAll(response.data);
+        }
+        unreadNotificationsCount = response.unreadCount;
+        update();
       }
+      return response;
     } catch (e) {
-      print(e);
-     /* showAppSnackbar(
-        "خطأ",
-        "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
-        isError: true,
-      );*/
+      print('Error fetching notifications: $e');
+      return null;
     }
-    getUser();
   }
 
   getPrivacyPolicy() async {
@@ -373,10 +509,45 @@ class HomeController extends GetxController {
 
   @override
   void onInit() {
-    NotificationServices().getDeviceToken();
-    getAds();
-    getAboutUs();
-    getUser();
+    initializeHome();
     super.onInit();
   }
+
+  // Initialize all home data - called on page load and refresh
+  Future<void> initializeHome({bool force = false}) async {
+    if (!force && _hasInitialized) {
+      return;
+    }
+    if (_isInitializing) {
+      return;
+    }
+
+    _isInitializing = true;
+    isLoading = true;
+    update();
+
+    try {
+      // Call all APIs in parallel
+      await Future.wait<void>([
+        NotificationServices().getDeviceToken(),
+        getAds(),
+        getServices(),
+        getAboutUs(),
+        getAppAppearance(),
+        getOffers(),
+        getExchangeOffers(),
+        getContactUs(),
+        getUser(),
+        getNotifications(),
+      ]);
+      _hasInitialized = true;
+    } catch (e) {
+      print('Error initializing home: $e');
+    } finally {
+      isLoading = false;
+      _isInitializing = false;
+      update();
+    }
+  }
 }
+

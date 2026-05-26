@@ -52,57 +52,16 @@ class _UpdateUserState extends State<UpdateUser> {
                     key: _formKey,
                     child: ListView(
                       children: [
-                        SizedBox(height: height * 0.15),
-
-                        // ========= اختيار صورة =========
-                        Center(
-                          child: GestureDetector(
-                            onTap: () => controller.pickImage(),
-                            child: CircleAvatar(
-                              radius: 76,
-                              backgroundColor: AppColors.four,
-                              child: CircleAvatar(
-                                radius: 75,
-                                backgroundColor: Colors.grey.shade300,
-                                backgroundImage: controller.imageFile != null
-                                    ? FileImage(controller.imageFile!)
-                                    : (controller.currentUserImage != null &&
-                                                  controller
-                                                      .currentUserImage!
-                                                      .isNotEmpty
-                                              ? NetworkImage(
-                                    'https://www.salhly.lareenmedco.com/${controller.currentUserImage}'.toString().
-                                  contains("storage")?
-                                  'https://www.salhly.lareenmedco.com/${controller.currentUserImage}':
-                                  'https://www.salhly.lareenmedco.com/storage/${controller.currentUserImage}',
-                                                )
-                                              : null)
-                                          as ImageProvider?,
-                                child:
-                                    (controller.imageFile == null &&
-                                        (controller.currentUserImage == null ||
-                                            controller
-                                                .currentUserImage!
-                                                .isEmpty))
-                                    ? Icon(
-                                        Icons.camera_alt,
-                                        color: Colors.black54,
-                                        size: 35,
-                                      )
-                                    : null,
-                              ),
-                            ),
+                        SizedBox(height: height * 0.22),
+                        SizedBox(
+                          height: 140,
+                          width: 140,
+                          child: Image.asset(
+                            'assets/images/logo2.png',
+                            fit: BoxFit.contain,
                           ),
                         ),
-                        SizedBox(height: 10),
-                        Center(
-                          child: Text(
-                            "اختر صورة شخصية",
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                        ),
-
-                        SizedBox(height: height * 0.08),
+                        SizedBox(height: height * 0.04),
 
                         // ========= الحقول =========
                         BuildTextFormField(

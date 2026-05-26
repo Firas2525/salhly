@@ -150,36 +150,29 @@ class _RequestsViewState extends State<RequestsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF7F8FA),
-      appBar: AppBar(
-        centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(
+      body: Stack(children: [
+      Positioned.fill(child: Container(color: Colors.white)),
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        height: MediaQuery.of(context).size.height * 0.35,
+        child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [AppColors.four, AppColors.four.withOpacity(0.85)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.blue,
+                Colors.blue.withOpacity(0.55),
+                Colors.white,
+              ],
+              stops: const [0.0, 0.6, 1.0],
             ),
           ),
         ),
-        title: Row(
-          children: [
-            Icon(Icons.note_alt, color: Colors.white),
-            SizedBox(width: 8),
-            const Text(
-              'الطلبات',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ],
-        ),
       ),
-
-      body: GetBuilder<RequestsController>(
+      GetBuilder<RequestsController>(
         builder: (controller) {
           if (controller.isLoading) {
             return Center(
@@ -191,6 +184,28 @@ class _RequestsViewState extends State<RequestsView> {
             padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
             child: Column(
               children: [
+                // Search / header
+
+                SizedBox(height: 40),
+                Row(
+                  children: [
+                    GestureDetector(
+                        onTap: (){
+                          Navigator.of(context).pop();
+                        },
+                        child: Icon(Icons.arrow_back, color: Colors.white, size: 28)),
+                    const SizedBox(width: 12),
+                    Text(
+                      'الخدمات المطلوبة',
+                      style: GoogleFonts.cairo(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
                 Expanded(
                   child: controller.requests.isEmpty
                       ? Center(
@@ -417,7 +432,7 @@ class _RequestsViewState extends State<RequestsView> {
           );
         },
       ),
-    );
+    ]));
   }
 }
 

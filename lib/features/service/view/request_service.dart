@@ -34,40 +34,43 @@ class _RequestServiceViewState extends State<RequestServiceView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [AppColors.four, AppColors.four.withOpacity(0.6)],
+      body: Stack(
+        children: [
+          Positioned.fill(child: Container(color: Colors.white)),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.35,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.blue,
+                    Colors.blue.withOpacity(0.55),
+                    Colors.white,
+                  ],
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+              ),
             ),
           ),
-        ),
-        title: const Text(
-          'طلب خدمة',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-      ),
 
-      body: GetBuilder<RequestServiceController>(
-        builder: (controller) {
-          return controller.isLoading
-              ? Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.four,
-                    strokeWidth: 4,
-                  ),
-                )
-              : Container();
-        },
+          GetBuilder<RequestServiceController>(
+            builder: (controller) {
+              return controller.isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.four,
+                        strokeWidth: 4,
+                      ),
+                    )
+                  : Container();
+            },
+          ),
+        ],
       ),
     );
   }

@@ -40,36 +40,17 @@ class _RegisterState extends State<Register> {
               key: _formKey,
               child: ListView(
                 children: [
-                  SizedBox(height: height * 0.12),
+                  SizedBox(height: height * 0.18),
 
-                  // ========= اختيار صورة =========
-                  Center(
-                    child: GestureDetector(
-                      onTap: () => controller.pickImage(),
-                      child: CircleAvatar(
-
-                        radius: 76,
-                        backgroundColor: AppColors.four,
-                        child: CircleAvatar(
-                          radius: 75,
-                          backgroundColor: Colors.grey.shade300,
-                          backgroundImage: controller.imageFile != null
-                              ? FileImage(controller.imageFile!)
-                              : null,
-                          child: controller.imageFile == null
-                              ? Icon(Icons.camera_alt,
-                              color: Colors.black54, size: 35)
-                              : null,
-                        ),
-                      ),
+                  // ========= لوغو =========
+                  SizedBox(
+                    height: 140,
+                    width: 140,
+                    child: Image.asset(
+                      'assets/images/logo2.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  SizedBox(height: 10),
-                  Center(
-                    child: Text("اختر صورة شخصية",
-                        style: TextStyle(color: Colors.black54)),
-                  ),
-
                   SizedBox(height: height * 0.06),
 
                   // ========= الحقول =========

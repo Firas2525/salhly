@@ -51,13 +51,17 @@ class NotificationServices {
     }
   }
 
-  Future<String> getDeviceToken() async {
-
-
+  Future<String?> getDeviceToken() async {
     String? token = await messaging.getToken();
+    if (token == null || token.isEmpty) return token;
 
-     sendToken(token!);
-     print("this is token firebase  {{ $token  }}");
+    final lastToken = App.prefs.getString('fcm_token_sent');
+    if (lastToken == token) {
+      print("FCM token already sent");
+      return token;
+    }
+
+    await sendToken(token);
     return token;
   }
 
@@ -160,7 +164,9 @@ sendToken(String token) async {
     print(response.statusCode);
     print(data);
     if (response.statusCode == 200 || response.statusCode == 201|| response.statusCode == 220) {
-      print("okkkkkkkkkk");   print("nooooooooooooooooootiiiiii");
+      print("okkkkkkkkkk");
+      print("nooooooooooooooooootiiiiii");
+      await App.prefs.setString('fcm_token_sent', token);
     } else {
 
     }}

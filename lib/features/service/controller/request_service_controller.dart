@@ -31,8 +31,8 @@ class RequestServiceController extends GetxController {
   // Subservices list
   List<SubServiceModel> subServices = [];
 
-  // Image
-  File? imageFile;
+  // Images (support multiple)
+  List<File> imageFiles = [];
 
   // Audio recording & playback
   final Record _recorder = Record();
@@ -156,14 +156,16 @@ class RequestServiceController extends GetxController {
     );
 
     if (picked != null) {
-      imageFile = File(picked.path);
+      imageFiles.add(File(picked.path));
       update();
     }
   }
 
-  void removeImage() {
-    imageFile = null;
-    update();
+  void removeImage(int index) {
+    if (index >= 0 && index < imageFiles.length) {
+      imageFiles.removeAt(index);
+      update();
+    }
   }
 
   // Audio recording
@@ -304,7 +306,7 @@ class RequestServiceController extends GetxController {
     }
 
     final hasDescription = descriptionController.text.trim().isNotEmpty;
-    final hasImage = imageFile != null;
+    final hasImage = imageFiles.isNotEmpty;
     final hasAudio = audioFilePath != null;
 
     if (!hasDescription && !hasImage && !hasAudio) {
@@ -337,14 +339,11 @@ class RequestServiceController extends GetxController {
       if (selectedSubServiceId != null) request.fields['sub_service_id'] = selectedSubServiceId.toString();
       if (descriptionController.text.trim().isNotEmpty) request.fields['description'] = descriptionController.text.trim();
 
-      int attachIndex = 0;
-      if (imageFile != null) {
-        request.files.add(await http.MultipartFile.fromPath('files[$attachIndex]', imageFile!.path));
-        attachIndex++;
+      for (var imageFile in imageFiles) {
+        request.files.add(await http.MultipartFile.fromPath('files[]', imageFile.path));
       }
       if (audioFilePath != null) {
-        request.files.add(await http.MultipartFile.fromPath('files[$attachIndex]', audioFilePath!));
-        attachIndex++;
+        request.files.add(await http.MultipartFile.fromPath('files[]', audioFilePath!));
       }
 
       final streamed = await request.send();
@@ -358,7 +357,7 @@ class RequestServiceController extends GetxController {
         phoneController.clear();
         addressController.clear();
         descriptionController.clear();
-        imageFile = null;
+        imageFiles.clear();
         await deleteAudio();
       } else if (streamed.statusCode == 401) {
         showAppSnackbar('تنبيه', 'غير مصرح. الرجاء تسجيل الدخول مجدداً');

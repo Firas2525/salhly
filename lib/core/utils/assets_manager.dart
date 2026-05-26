@@ -4,6 +4,7 @@ class ImgAsset {
   static const String onboard2 = 'assets/images/onboard2.png';
   static const String onboard3 = 'assets/images/onboard3.png';
   static const String onboard4 = 'assets/images/onboard4.png';
+  static const String whiteLogo = 'assets/images/4.png';
 
   // icons for navigation bottom
   static const String homeIconActive = 'assets/images/home_icon_active.png';

@@ -26,7 +26,7 @@ class _PrivacyPolicyViewState extends State<PrivacyPolicyView> {
             gradient: LinearGradient(
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
-              colors: [AppColors.four, AppColors.four.withOpacity(0.6)],
+              colors: [Colors.blue, Colors.blue.withOpacity(0.6)],
             ),
           ),
         ),

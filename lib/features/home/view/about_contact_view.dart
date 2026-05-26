@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:salhly/features/home/controller/home_controller.dart';
 
+import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/ui_utils.dart';
 
 class AboutContactView extends StatefulWidget {
@@ -35,6 +36,13 @@ class _AboutContactViewState extends State<AboutContactView> {
   Future<void> _launchUrl(String url) async {
     if (url.isEmpty) return;
     try {
+      if (url.startsWith('tel:')) {
+        final phoneNumber = url.substring(4);
+        if (phoneNumber.isNotEmpty) {
+          await dialPhoneNumber(phoneNumber);
+          return;
+        }
+      }
       final uri = Uri.parse(url);
       final launched = await launchUrl(
         uri,
@@ -60,7 +68,7 @@ class _AboutContactViewState extends State<AboutContactView> {
             gradient: LinearGradient(
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
-              colors: [AppColors.four, AppColors.four.withOpacity(0.6)],
+              colors: [Colors.blue, Colors.blue.withOpacity(0.6)],
             ),
           ),
         ),

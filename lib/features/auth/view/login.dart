@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:salhly/features/auth/view/register.dart';
 import 'package:salhly/features/auth/view/reset_password.dart';
+import 'package:salhly/features/home/controller/home_controller.dart';
+import '../../../core/utils/ui_utils.dart';
 import '../../../../configs/app_colors.dart';
 import '../controller/login_controller.dart';
 import 'widgets/BuildTextFormField.dart';
@@ -15,9 +18,78 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   final controller = Get.put(AuthController());
+  late final HomeController _homeController = Get.isRegistered<HomeController>()
+      ? Get.find<HomeController>()
+      : Get.put(HomeController());
 
   final _formKey = GlobalKey<FormState>(); // ✅ مفتاح الفورم
   bool showPassword = false;
+  bool _isContactLoading = false;
+
+  String _normalizeWhatsAppNumber(String raw) {
+    var s = raw.replaceAll(RegExp(r'[\s\-\(\)+]'), '');
+    if (s.startsWith('00')) s = s.substring(2);
+    if (s.startsWith('0')) s = s.substring(1);
+    if (!s.startsWith('963')) s = '963$s';
+    return s;
+  }
+
+  Future<void> _handleForgotPassword() async {
+    setState(() {
+      _isContactLoading = true;
+    });
+
+    await _homeController.getContactUs();
+
+    setState(() {
+      _isContactLoading = false;
+    });
+
+    final rawWa = _homeController.contactUsModel?.whatsAppNumber ?? '';
+    final wa = _normalizeWhatsAppNumber(rawWa);
+    if (wa.isEmpty) {
+      showAppSnackbar('خطأ', 'رقم الواتساب غير متوفر', isError: true);
+      return;
+    }
+
+    showConfirmDialog(
+      title: 'نسيت كلمة المرور؟',
+      middleText: 'سوف يتم الانتقال لواتس اب للتواصل مع الدعم.',
+      confirmText: 'موافق',
+      cancelText: 'غير موافق',
+      onConfirm: () async {
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        final whatsappUri = Uri.parse('whatsapp://send?phone=$wa');
+        final waMeUri = Uri.parse('https://wa.me/$wa');
+        final apiUri = Uri.parse('https://api.whatsapp.com/send?phone=$wa');
+
+        try {
+          await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+          return;
+        } catch (e) {
+          print('WhatsApp app launch error: $e');
+        }
+
+        try {
+          await launchUrl(waMeUri, mode: LaunchMode.externalApplication);
+          return;
+        } catch (e) {
+          print('WhatsApp wa.me launch error: $e');
+        }
+
+        try {
+          await launchUrl(apiUri, mode: LaunchMode.externalApplication);
+          return;
+        } catch (e) {
+          print('WhatsApp api launch error: $e');
+        }
+
+        showAppSnackbar('خطأ', 'تعذر فتح واتساب', isError: true);
+      },
+      onCancel: () {},
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +101,7 @@ class _LoginState extends State<Login> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: GetBuilder<AuthController>(builder: (_) {
-          return controller.isLoading
+          return controller.isLoading || _isContactLoading
               ? Center(
               child: CircularProgressIndicator(
                   color: AppColors.four, strokeWidth: 4))
@@ -90,19 +162,17 @@ class _LoginState extends State<Login> {
                   ),
                 ),
 
-              /*  SizedBox(height: height * 0.012),
+SizedBox(height: height * 0.012),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      Get.offAll(()=>ResetPassword());
-                    },
+                    onPressed: _handleForgotPassword,
                     child: Text(
                       'نسيت كلمة المرور؟',
                       style: TextStyle(color: AppColors.four),
                     ),
                   ),
-                ),*/
+                ),
 
                 SizedBox(height: height * 0.02),
 

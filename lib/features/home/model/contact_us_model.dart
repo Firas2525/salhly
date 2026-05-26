@@ -8,6 +8,7 @@ class ContactUsModel {
   final String facebook;
   final String instagram;
   final String linkedin;
+  final String contact;
 
   ContactUsModel({
     required this.id,
@@ -19,6 +20,7 @@ class ContactUsModel {
     required this.facebook,
     required this.instagram,
     required this.linkedin,
+    required this.contact,
   });
 
   factory ContactUsModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class ContactUsModel {
       facebook: json["facebook"] ?? "",
       instagram: json["instagram"] ?? "",
       linkedin: json["linkedin"] ?? "",
+      contact: json["contact"] ?? "",
     );
   }
 }

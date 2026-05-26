@@ -5,6 +5,7 @@ import 'package:salhly/configs/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:salhly/features/home/controller/home_controller.dart';
+import '../../../core/utils/phone_utils.dart';
 
 class AboutContactView extends StatefulWidget {
   const AboutContactView({super.key});
@@ -32,6 +33,14 @@ class _AboutContactViewState extends State<AboutContactView>
   }
 
   Future<void> _launchUrl(String url) async {
+    if (url.isEmpty) return;
+    if (url.startsWith('tel:')) {
+      final phoneNumber = url.substring(4);
+      if (phoneNumber.isNotEmpty) {
+        await dialPhoneNumber(phoneNumber);
+      }
+      return;
+    }
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url));
     }

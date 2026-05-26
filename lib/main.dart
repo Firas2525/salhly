@@ -13,6 +13,7 @@ import 'features/auth/view/onboard_scr.dart';
 import 'features/auth/view/splash_screen.dart';
 import 'features/auth/view/update_required_screen.dart';
 import 'features/home/view/home_page_view.dart';
+import 'features/home/view/new_home_page_view.dart';
 import 'features/home_worker/view/home_worker_view.dart';
 import 'firebase_options.dart';
 import 'notifiction_services.dart';
@@ -62,7 +63,8 @@ void main() async {
 class SuperApp extends StatelessWidget {
   const SuperApp({
     super.key,
-    required this.controller,    required this.localeController,
+    required this.controller,
+    required this.localeController,
   });
 
   final ThemeController controller;
@@ -80,7 +82,6 @@ class SuperApp extends StatelessWidget {
       builder: (_, __) {
         return GetMaterialApp(
           locale: const Locale("ar"),
-
           supportedLocales: SHelpers.supportedLocales,
           localizationsDelegates: SHelpers.localizationsDelegates,
           themeMode: controller.mode,
@@ -93,10 +94,8 @@ class SuperApp extends StatelessWidget {
             ),
             scaffoldBackgroundColor: const Color(0xFFF3F3F3),
           ),
-
           initialRoute: '/splash',
           navigatorKey: App.scaffoldMessengerKey,
-
           routes: {
             '/splash': (context) => const SplashScreen(),
             '/': (context) => const OnboardScr(),

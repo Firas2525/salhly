@@ -12,6 +12,7 @@ import '../../../core/utils/app_api.dart';
 import '../../../main.dart';
 import '../../../notifiction_services.dart';
 import '../../home/view/home_page_view.dart';
+import '../../home/view/new_home_page_view.dart';
 import '../../home/controller/home_controller.dart';
 import '../../home_worker/view/home_worker_view.dart';
 
