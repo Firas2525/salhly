@@ -28,6 +28,21 @@ class HomeWorkerController extends GetxController {
 
   UserModel? user;
 
+  Future<void> _forceLogout() async {
+    await App.prefs.clear();
+    user = null;
+    update();
+    Get.offAll(() => Login());
+  }
+
+  dynamic _tryDecodeBody(String body) {
+    try {
+      return jsonDecode(body);
+    } catch (_) {
+      return null;
+    }
+  }
+
   getAboutUs() async {
     isLoading = true;
     update();
@@ -46,16 +61,22 @@ class HomeWorkerController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
 
-      var data = jsonDecode(await response.stream.bytesToString());
-      print(data);
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      print(data ?? responseBody);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           response.statusCode == 220) {
         print("AboutUs Loaded Successfully");
       } else {
-        showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ");
+        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ");
       }
     } catch (e) {
       print(e);
@@ -82,14 +103,26 @@ class HomeWorkerController extends GetxController {
       request.headers.addAll(headers);
 
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
-      print(data);
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      print(data ?? responseBody);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (data['data'] != null) {
+        if (data != null && data['data'] != null) {
           pendingOrders = (data['data'] as List)
               .map((o) => MaintenanceOrderModel.fromJson(o))
               .toList();
+        } else {
+          pendingOrders = [];
         }
+      } else {
+        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ");
       }
     } catch (e) {
       print('Error fetching pending orders: $e');
@@ -113,14 +146,26 @@ class HomeWorkerController extends GetxController {
       request.headers.addAll(headers);
 
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      print(data ?? responseBody);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (data['data'] != null) {
+        if (data != null && data['data'] != null) {
           approvedOrders = (data['data'] as List)
               .map((o) => MaintenanceOrderModel.fromJson(o))
               .toList();
+        } else {
+          approvedOrders = [];
         }
+      } else {
+        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ");
       }
     } catch (e) {
       print('Error fetching approved orders: $e');
@@ -144,14 +189,25 @@ class HomeWorkerController extends GetxController {
       request.headers.addAll(headers);
 
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
-      print(data);
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      print(data ?? responseBody);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (data['data'] != null) {
+        if (data != null && data['data'] != null) {
           completedOrders = (data['data'] as List)
               .map((o) => MaintenanceOrderModel.fromJson(o))
               .toList();
+        } else {
+          completedOrders = [];
         }
+      } else {
+        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ");
       }
     } catch (e) {
       print('Error fetching completed orders: $e');
@@ -227,6 +283,11 @@ class HomeWorkerController extends GetxController {
       if (response.statusCode == 200 || response.statusCode == 201) {
         showAppSnackbar('نجاح', 'تم قبول الطلب بنجاح');
         await refreshAllOrders();
+      } else if (response.statusCode == 403 || response.statusCode == 401) {
+        await App.prefs.clear();
+        user = null;
+        update();
+        Get.offAll(() => Login());
       } else {
         showAppSnackbar(
           'خطأ',
@@ -260,6 +321,11 @@ class HomeWorkerController extends GetxController {
       if (response.statusCode.toString().startsWith('2')) {
         showAppSnackbar('نجاح', data['message'] ?? 'تم إلغاء الطلب بنجاح');
         await refreshAllOrders();
+      } else if (response.statusCode == 403 || response.statusCode == 401) {
+        await App.prefs.clear();
+        user = null;
+        update();
+        Get.offAll(() => Login());
       } else {
         showAppSnackbar('خطأ', data['message'] ?? 'فشل إلغاء الطلب', isError: true);
       }
@@ -311,6 +377,11 @@ class HomeWorkerController extends GetxController {
         await refreshAllOrders();
         // go back to worker home
         Get.offAll(() => HomeWorkerView());
+      } else if (response.statusCode == 403 || response.statusCode == 401) {
+        await App.prefs.clear();
+        user = null;
+        update();
+        Get.offAll(() => Login());
       } else {
         showAppSnackbar(
           'خطأ',

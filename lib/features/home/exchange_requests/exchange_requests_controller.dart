@@ -39,7 +39,8 @@ class ExchangeRequestsController extends GetxController {
   void _onScroll() {
     if (!scrollController.hasClients || isLoading || isLoadingMore) return;
     if (currentPage >= lastPage) return;
-    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 120) {
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 120) {
       loadMoreRequests();
     }
   }
@@ -53,7 +54,9 @@ class ExchangeRequestsController extends GetxController {
 
     try {
       String? token = App.prefs.getString('token');
-      var uri = Uri.parse('https://www.salhly.lareenmedco.com/api/exchange-pieces/my-requests?page=$currentPage&per_page=$perPage');
+      var uri = Uri.parse(
+        'https://www.salhly.lareenmedco.com/api/exchange-pieces/my-requests?page=$currentPage&per_page=$perPage',
+      );
       var response = await http.get(
         uri,
         headers: {
@@ -66,19 +69,31 @@ class ExchangeRequestsController extends GetxController {
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
         if (data['status'] == true || data['isSuccessful'] == true) {
-          final List pageItems = (data['data'] is List) ? data['data'] : (data['data']?['data'] ?? []);
-          requests = pageItems.map((r) => ExchangePieceRequest.fromJson(r)).toList();
+          final List pageItems = (data['data'] is List)
+              ? data['data']
+              : (data['data']?['data'] ?? []);
+          requests = pageItems
+              .map((r) => ExchangePieceRequest.fromJson(r))
+              .toList();
 
-          Map? pagination = data['pagination'] ?? (data['data'] is Map ? data['data']['pagination'] : null);
+          Map? pagination =
+              data['pagination'] ??
+              (data['data'] is Map ? data['data']['pagination'] : null);
           if (pagination != null) {
             currentPage = _parsePage(pagination['current_page'], fallback: 1);
-            lastPage = _parsePage(pagination['last_page'], fallback: currentPage);
+            lastPage = _parsePage(
+              pagination['last_page'],
+              fallback: currentPage,
+            );
           }
         } else {
           showAppSnackbar('خطأ', data['message'] ?? 'فشل في جلب الطلبات');
         }
       } else {
-        showAppSnackbar('خطأ', 'فشل في جلب الطلبات (حالة: ${response.statusCode})');
+        showAppSnackbar(
+          'خطأ',
+          'فشل في جلب الطلبات (حالة: ${response.statusCode})',
+        );
       }
     } catch (e) {
       print(e);
@@ -99,7 +114,9 @@ class ExchangeRequestsController extends GetxController {
     final nextPage = currentPage + 1;
     try {
       String? token = App.prefs.getString('token');
-      var uri = Uri.parse('https://www.salhly.lareenmedco.com/api/exchange-pieces/my-requests?page=$nextPage&per_page=$perPage');
+      var uri = Uri.parse(
+        'https://www.salhly.lareenmedco.com/api/exchange-pieces/my-requests?page=$nextPage&per_page=$perPage',
+      );
       var response = await http.get(
         uri,
         headers: {
@@ -112,13 +129,25 @@ class ExchangeRequestsController extends GetxController {
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
         if (data['status'] == true || data['isSuccessful'] == true) {
-          final List pageItems = (data['data'] is List) ? data['data'] : (data['data']?['data'] ?? []);
-          requests.addAll(pageItems.map((r) => ExchangePieceRequest.fromJson(r)).toList());
+          final List pageItems = (data['data'] is List)
+              ? data['data']
+              : (data['data']?['data'] ?? []);
+          requests.addAll(
+            pageItems.map((r) => ExchangePieceRequest.fromJson(r)).toList(),
+          );
 
-          Map? pagination = data['pagination'] ?? (data['data'] is Map ? data['data']['pagination'] : null);
+          Map? pagination =
+              data['pagination'] ??
+              (data['data'] is Map ? data['data']['pagination'] : null);
           if (pagination != null) {
-            currentPage = _parsePage(pagination['current_page'], fallback: nextPage);
-            lastPage = _parsePage(pagination['last_page'], fallback: currentPage);
+            currentPage = _parsePage(
+              pagination['current_page'],
+              fallback: nextPage,
+            );
+            lastPage = _parsePage(
+              pagination['last_page'],
+              fallback: currentPage,
+            );
           }
         }
       }
@@ -139,7 +168,9 @@ class ExchangeRequestsController extends GetxController {
 
     try {
       String? token = App.prefs.getString('token');
-      var uri = Uri.parse('https://www.salhly.lareenmedco.com/api/exchange-pieces/find/$id');
+      var uri = Uri.parse(
+        'https://www.salhly.lareenmedco.com/api/exchange-pieces/find/$id',
+      );
       var response = await http.get(
         uri,
         headers: {

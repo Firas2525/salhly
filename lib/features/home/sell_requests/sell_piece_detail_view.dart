@@ -6,7 +6,10 @@ import 'package:salhly/features/home/sell_requests/sell_requests_controller.dart
 import 'package:salhly/features/home/sell_requests/sell_piece_request_model.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/utils/ui_utils.dart';
+import '../../../core/utils/phone_utils.dart';
+import '../controller/home_controller.dart';
 
 class SellPieceDetailView extends StatefulWidget {
   final int requestId;
@@ -151,6 +154,32 @@ class _SellPieceDetailViewState extends State<SellPieceDetailView> {
       if (!mounted) return;
       controller.fetchRequestDetails(widget.requestId);
     });
+  }
+
+  String get _whatsappNumber {
+    if (Get.isRegistered<HomeController>()) {
+      return Get.find<HomeController>().contactUsModel?.whatsAppNumber ?? '';
+    }
+    return '';
+  }
+
+  String get _phoneNumber {
+    if (Get.isRegistered<HomeController>()) {
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
+    }
+    return '';
+  }
+
+  Future<void> _openWhatsApp() async {
+    final wa = _whatsappNumber;
+    if (wa.isEmpty) return;
+    await launchUrl(Uri.parse('https://wa.me/$wa'));
+  }
+
+  Future<void> _openPhoneCall() async {
+    final phone = _phoneNumber;
+    if (phone.isEmpty) return;
+    await dialPhoneNumber(phone);
   }
 
   @override
@@ -417,6 +446,9 @@ class _SellPieceDetailViewState extends State<SellPieceDetailView> {
                             color: AppColors.four,
                           ),
                         ),
+                        SizedBox(height: 16),
+                        // Contact Section when admin price is set
+
                       ],
                       SizedBox(height: 12),
                       // Media
@@ -496,6 +528,90 @@ class _SellPieceDetailViewState extends State<SellPieceDetailView> {
                     ),
                   ),
                 ],
+
+                SizedBox(height: 15),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.blue.shade200,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'إذا أعجبك العرض تواصل معنا',
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade900,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _openPhoneCall,
+                              icon: const Icon(
+                                Icons.phone,
+                                color: Colors.white,
+                              ),
+                              label: Text(
+                                'اتصل الآن',
+                                style: GoogleFonts.cairo(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _openWhatsApp,
+                              icon: const Icon(
+                                Icons.message,
+                                color: Colors.white,
+                              ),
+                              label: Text(
+                                'واتساب',
+                                style: GoogleFonts.cairo(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF25D366),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 15),
               ],
             ),
           );

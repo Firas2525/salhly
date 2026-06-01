@@ -1961,7 +1961,8 @@ class _HomeViewBodyState extends State<HomeViewBody>
                                 SizedBox(height: 20),
                                 // العروض
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Text(
@@ -1986,7 +1987,6 @@ class _HomeViewBodyState extends State<HomeViewBody>
 
                                       child: Row(
                                         children: [
-
                                           Text(
                                             'عرض الكل',
                                             style: GoogleFonts.cairo(
@@ -1995,16 +1995,14 @@ class _HomeViewBodyState extends State<HomeViewBody>
                                               color: AppColors.four,
                                             ),
                                           ),
-                                          SizedBox(width: 10,),
-                                           Icon(
+                                          SizedBox(width: 10),
+                                          Icon(
                                             Icons.arrow_forward_ios,
                                             size: 14,
                                             color: AppColors.four,
                                           ),
                                         ],
                                       ),
-
-
                                     ),
                                   ],
                                 ),
@@ -2292,7 +2290,12 @@ class _HomeViewBodyState extends State<HomeViewBody>
                                                               ),
                                                               Expanded(
                                                                 child: Text(
-                                                                  '${offer.description}',
+                                                                  '${offer.description}'
+                                                                      .toString()
+                                                                      .replaceAll(
+                                                                        '\n',
+                                                                        ' ',
+                                                                      ),
                                                                   style: TextStyle(
                                                                     color: Colors
                                                                         .grey[900],
@@ -2377,8 +2380,10 @@ class _HomeViewBodyState extends State<HomeViewBody>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 5,
-                                    left: 20.0, right: 20.0,
+                                  padding: const EdgeInsets.only(
+                                    top: 5,
+                                    left: 20.0,
+                                    right: 20.0,
                                   ),
                                   child: Row(
                                     mainAxisAlignment:
@@ -2394,7 +2399,7 @@ class _HomeViewBodyState extends State<HomeViewBody>
                                           color: AppColors.four,
                                         ),
                                       ),
-                                     GestureDetector(
+                                      GestureDetector(
                                         onTap: () {
                                           Get.to(
                                             () => AllOffersView(
@@ -2403,25 +2408,24 @@ class _HomeViewBodyState extends State<HomeViewBody>
                                             ),
                                           );
                                         },
-                                      child: Row(
-                                         children: [
-
-                                           Text(
-                                             'عرض الكل',
-                                             style: GoogleFonts.cairo(
-                                               fontSize: 14,
-                                               fontWeight: FontWeight.w600,
-                                               color: AppColors.four,
-                                             ),
-                                           ),
-                                           SizedBox(width: 10,),
-                                           Icon(
-                                             Icons.arrow_forward_ios,
-                                             size: 14,
-                                             color: AppColors.four,
-                                           ),
-                                         ],
-                                       ),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              'عرض الكل',
+                                              style: GoogleFonts.cairo(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.four,
+                                              ),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Icon(
+                                              Icons.arrow_forward_ios,
+                                              size: 14,
+                                              color: AppColors.four,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -2439,340 +2443,381 @@ class _HomeViewBodyState extends State<HomeViewBody>
                                           ),
                                         )
                                       : GridView.builder(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 10,
-                                    ),
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          mainAxisSpacing: 15,
-                                          crossAxisSpacing: 15,
-                                          mainAxisExtent: 280,
-                                        ),
-                                    itemCount: controller.offers.length,
-                                    itemBuilder: (context, index) {
-                                      final offer = controller.offers[index];
-                                      return Container(
-                                        margin: const EdgeInsets.symmetric(
-                                          vertical: 6,
-                                        ),
-
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () {
-                                            Get.to(
-                                              () => OfferDetailView(
-                                                offer: offer,
-                                                offerId: offer.id,
-                                              ),
-                                            );
-                                          },
-                                          borderRadius: BorderRadius.circular(
-                                            10,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 10,
                                           ),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Color(0xFFF7F9FC),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.grey
-                                                      .withOpacity(0.30),
-                                                  blurRadius: 12,
-                                                  offset: Offset(0, 6),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                // image (non-interactive here; card tap opens details)
-                                                Stack(
-                                                  children: [
-                                                    Container(
-                                                      width: double.infinity,
-                                                      height: 120,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.grey[200],
-                                                        borderRadius:
-                                                            const BorderRadius.vertical(
-                                                              top:
-                                                                  Radius.circular(
-                                                                    10,
-                                                                  ),
-                                                            ),
-                                                        image:
-                                                            offer
-                                                                .images
-                                                                .isNotEmpty
-                                                            ? DecorationImage(
-                                                                image: CachedNetworkImageProvider(
-                                                                  offer
-                                                                      .images
-                                                                      .first
-                                                                      .imageUrl,
-                                                                ),
-                                                                fit: BoxFit
-                                                                    .cover,
-                                                              )
-                                                            : null,
-                                                      ),
-                                                      child:
-                                                          offer.images.isEmpty
-                                                          ? Center(
-                                                              child: Icon(
-                                                                Icons
-                                                                    .image_not_supported,
-                                                                color: AppColors
-                                                                    .primary,
-                                                                size:
-                                                                    MediaQuery.of(
-                                                                      context,
-                                                                    ).size.width *
-                                                                    0.14,
-                                                              ),
-                                                            )
-                                                          : null,
-                                                    ),
+                                          gridDelegate:
+                                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 2,
+                                                mainAxisSpacing: 15,
+                                                crossAxisSpacing: 15,
+                                                mainAxisExtent: 280,
+                                              ),
+                                          itemCount: controller.offers.length,
+                                          itemBuilder: (context, index) {
+                                            final offer =
+                                                controller.offers[index];
+                                            return Container(
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 6,
+                                                  ),
 
-                                                    if (offer.isSold)
-                                                      Positioned(
-                                                        top: 8,
-                                                        right: 8,
-                                                        child: Transform.rotate(
-                                                          angle: -0.08,
-                                                          child: Container(
-                                                            padding:
-                                                                const EdgeInsets.symmetric(
-                                                                  horizontal:
-                                                                      10,
-                                                                  vertical: 4,
-                                                                ),
-                                                            decoration: BoxDecoration(
-                                                              color: Colors
-                                                                  .red
-                                                                  .shade700,
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    8,
-                                                                  ),
-                                                              boxShadow: [
-                                                                BoxShadow(
-                                                                  color: Colors
-                                                                      .black26,
-                                                                  blurRadius: 6,
-                                                                  offset:
-                                                                      Offset(
-                                                                        0,
-                                                                        2,
-                                                                      ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            child: const Text(
-                                                              'تم البيع',
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                fontSize: 12,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-
-                                                    Positioned(
-                                                      bottom: 8,
-                                                      left: 4,
-                                                      child: Container(
-                                                        margin: EdgeInsets.only(
-                                                          left: 10,
-                                                        ),
-                                                        decoration: BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                15,
-                                                              ),
-                                                          color: Colors.blue,
-                                                        ),
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                              vertical: 5,
-                                                              horizontal: 10,
-                                                            ),
-                                                        child: Text(
-                                                          controller
-                                                              .offers[index]
-                                                              .newPrice,
-                                                          style: TextStyle(
-                                                            fontSize: 11,
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                      ),
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                onTap: () {
+                                                  Get.to(
+                                                    () => OfferDetailView(
+                                                      offer: offer,
+                                                      offerId: offer.id,
                                                     ),
-                                                  ],
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                    left:
-                                                        MediaQuery.of(
-                                                          context,
-                                                        ).size.width *
-                                                        0.035,
-                                                    right:
-                                                        MediaQuery.of(
-                                                          context,
-                                                        ).size.width *
-                                                        0.035,
-                                                    top:
-                                                        MediaQuery.of(
-                                                          context,
-                                                        ).size.width *
-                                                        0.035,
-                                                    bottom:
-                                                        MediaQuery.of(
-                                                          context,
-                                                        ).size.width *
-                                                        0.015,
+                                                  );
+                                                },
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFFF7F9FC),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.grey
+                                                            .withOpacity(0.30),
+                                                        blurRadius: 12,
+                                                        offset: Offset(0, 6),
+                                                      ),
+                                                    ],
                                                   ),
                                                   child: Column(
                                                     crossAxisAlignment:
                                                         CrossAxisAlignment
                                                             .start,
                                                     children: [
-                                                      Text(
-                                                        controller
-                                                                .offers[index]
-                                                                .name
-                                                                .isNotEmpty
-                                                            ? controller
-                                                                  .offers[index]
-                                                                  .name
-                                                            : "",
-                                                        style: TextStyle(
-                                                          fontSize:
-                                                              MediaQuery.of(
-                                                                context,
-                                                              ).size.width *
-                                                              0.038,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.black,
-                                                        ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                      SizedBox(
-                                                        height:
-                                                            MediaQuery.of(
-                                                              context,
-                                                            ).size.width *
-                                                            0.02,
-                                                      ),
-                                                      Row(
+                                                      // image (non-interactive here; card tap opens details)
+                                                      Stack(
                                                         children: [
-                                                          Icon(
-                                                            Icons.description,
-                                                            size: 18,
-                                                            color:
-                                                                AppColors.four,
+                                                          Container(
+                                                            width:
+                                                                double.infinity,
+                                                            height: 120,
+                                                            decoration: BoxDecoration(
+                                                              color: Colors
+                                                                  .grey[200],
+                                                              borderRadius:
+                                                                  const BorderRadius.vertical(
+                                                                    top:
+                                                                        Radius.circular(
+                                                                          10,
+                                                                        ),
+                                                                  ),
+                                                              image:
+                                                                  offer
+                                                                      .images
+                                                                      .isNotEmpty
+                                                                  ? DecorationImage(
+                                                                      image: CachedNetworkImageProvider(
+                                                                        offer
+                                                                            .images
+                                                                            .first
+                                                                            .imageUrl,
+                                                                      ),
+                                                                      fit: BoxFit
+                                                                          .cover,
+                                                                    )
+                                                                  : null,
+                                                            ),
+                                                            child:
+                                                                offer
+                                                                    .images
+                                                                    .isEmpty
+                                                                ? Center(
+                                                                    child: Icon(
+                                                                      Icons
+                                                                          .image_not_supported,
+                                                                      color: AppColors
+                                                                          .primary,
+                                                                      size:
+                                                                          MediaQuery.of(
+                                                                            context,
+                                                                          ).size.width *
+                                                                          0.14,
+                                                                    ),
+                                                                  )
+                                                                : null,
                                                           ),
-                                                          SizedBox(width: 5),
-                                                          Expanded(
-                                                            child: Text(
-                                                              '${controller.offers[index].description}',
+
+                                                          if (offer.isSold)
+                                                            Positioned(
+                                                              top: 8,
+                                                              right: 8,
+                                                              child: Transform.rotate(
+                                                                angle: -0.08,
+                                                                child: Container(
+                                                                  padding:
+                                                                      const EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            10,
+                                                                        vertical:
+                                                                            4,
+                                                                      ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: Colors
+                                                                        .red
+                                                                        .shade700,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          8,
+                                                                        ),
+                                                                    boxShadow: [
+                                                                      BoxShadow(
+                                                                        color: Colors
+                                                                            .black26,
+                                                                        blurRadius:
+                                                                            6,
+                                                                        offset:
+                                                                            Offset(
+                                                                              0,
+                                                                              2,
+                                                                            ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  child: const Text(
+                                                                    'تم البيع',
+                                                                    style: TextStyle(
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      fontSize:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+
+                                                          Positioned(
+                                                            bottom: 8,
+                                                            left: 4,
+                                                            child: Container(
+                                                              margin:
+                                                                  EdgeInsets.only(
+                                                                    left: 10,
+                                                                  ),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          15,
+                                                                        ),
+                                                                    color: Colors
+                                                                        .blue,
+                                                                  ),
+                                                              padding:
+                                                                  EdgeInsets.symmetric(
+                                                                    vertical: 5,
+                                                                    horizontal:
+                                                                        10,
+                                                                  ),
+                                                              child: Text(
+                                                                controller
+                                                                    .offers[index]
+                                                                    .newPrice,
+                                                                style: TextStyle(
+                                                                  fontSize: 11,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Padding(
+                                                        padding:
+                                                            EdgeInsets.only(
+                                                              left:
+                                                                  MediaQuery.of(
+                                                                    context,
+                                                                  ).size.width *
+                                                                  0.035,
+                                                              right:
+                                                                  MediaQuery.of(
+                                                                    context,
+                                                                  ).size.width *
+                                                                  0.035,
+                                                              top:
+                                                                  MediaQuery.of(
+                                                                    context,
+                                                                  ).size.width *
+                                                                  0.035,
+                                                              bottom:
+                                                                  MediaQuery.of(
+                                                                    context,
+                                                                  ).size.width *
+                                                                  0.015,
+                                                            ),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              controller
+                                                                      .offers[index]
+                                                                      .name
+                                                                      .isNotEmpty
+                                                                  ? controller
+                                                                        .offers[index]
+                                                                        .name
+                                                                  : "",
                                                               style: TextStyle(
-                                                                color: Colors
-                                                                    .grey[900],
                                                                 fontSize:
                                                                     MediaQuery.of(
                                                                       context,
                                                                     ).size.width *
-                                                                    0.032,
+                                                                    0.038,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: Colors
+                                                                    .black,
                                                               ),
+                                                              maxLines: 1,
                                                               overflow:
                                                                   TextOverflow
                                                                       .ellipsis,
                                                             ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(
-                                                        height:
-                                                            MediaQuery.of(
-                                                              context,
-                                                            ).size.width *
-                                                            0.01,
-                                                      ),
-                                                      // fuel type (matches icons used in details view)
-                                                      Row(
-                                                        children: [
-                                                          Icon(
-                                                            Icons.attach_money,
-                                                            size: 18,
-                                                            color:
-                                                                AppColors.four,
-                                                          ),
-                                                          SizedBox(width: 5),
-                                                          Text(
-                                                            ' ${controller.offers[index].oldPrice}',
-                                                            style: TextStyle(
-                                                              color: Colors
-                                                                  .grey[900],
-                                                              decoration:
-                                                                  TextDecoration
-                                                                      .lineThrough,
-                                                              fontSize:
+                                                            SizedBox(
+                                                              height:
                                                                   MediaQuery.of(
                                                                     context,
                                                                   ).size.width *
-                                                                  0.032,
+                                                                  0.02,
                                                             ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(
-                                                        height:
-                                                            MediaQuery.of(
-                                                              context,
-                                                            ).size.width *
-                                                            0.03,
-                                                      ),
-                                                      OfferCardWidgetButtons(
-                                                        phone: offer.phone,
-                                                        whatsapp:
-                                                            offer.whatsapp,
+                                                            Row(
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .description,
+                                                                  size: 18,
+                                                                  color:
+                                                                      AppColors
+                                                                          .four,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: 5,
+                                                                ),
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    controller
+                                                                        .offers[index]
+                                                                        .description
+                                                                        .toString()
+                                                                        .replaceAll(
+                                                                          '\n',
+                                                                          ' ',
+                                                                        ),
+                                                                    style: TextStyle(
+                                                                      color: Colors
+                                                                          .grey[900],
+                                                                      fontSize:
+                                                                          MediaQuery.of(
+                                                                            context,
+                                                                          ).size.width *
+                                                                          0.032,
+                                                                    ),
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            SizedBox(
+                                                              height:
+                                                                  MediaQuery.of(
+                                                                    context,
+                                                                  ).size.width *
+                                                                  0.01,
+                                                            ),
+                                                            // fuel type (matches icons used in details view)
+                                                            Row(
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .attach_money,
+                                                                  size: 18,
+                                                                  color:
+                                                                      AppColors
+                                                                          .four,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: 5,
+                                                                ),
+                                                                Text(
+                                                                  ' ${controller.offers[index].oldPrice}',
+                                                                  style: TextStyle(
+                                                                    color: Colors
+                                                                        .grey[900],
+                                                                    decoration:
+                                                                        TextDecoration
+                                                                            .lineThrough,
+                                                                    fontSize:
+                                                                        MediaQuery.of(
+                                                                          context,
+                                                                        ).size.width *
+                                                                        0.032,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            SizedBox(
+                                                              height:
+                                                                  MediaQuery.of(
+                                                                    context,
+                                                                  ).size.width *
+                                                                  0.03,
+                                                            ),
+                                                            OfferCardWidgetButtons(
+                                                              phone:
+                                                                  offer.phone,
+                                                              whatsapp: offer
+                                                                  .whatsapp,
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
+                                              ),
+                                            );
+                                          },
                                         ),
-                                      );
-                                    },
-                                  ),
-          )],
+                                ),
+                              ],
+                            ),
+
+                            // Contact section
+                          ],
                         ),
-
-
-                      // Contact section
+                      ),
                     ],
                   ),
-                      ) ]));
+                );
         },
       ),
     );

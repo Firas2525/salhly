@@ -26,6 +26,7 @@ class AllOffersView extends StatefulWidget {
 class _AllOffersViewState extends State<AllOffersView> {
   final HomeController controller = Get.put(HomeController());
   bool isLoading = true;
+  String _search = '';
 
   @override
   void initState() {
@@ -56,6 +57,13 @@ class _AllOffersViewState extends State<AllOffersView> {
     final offers = widget.useExchangeOffers
         ? controller.exchangeOffers
         : controller.offers;
+    final filteredOffers = _search.trim().isEmpty
+        ? offers
+        : offers
+            .where((offer) => offer.name
+                .toLowerCase()
+                .contains(_search.trim().toLowerCase()))
+            .toList();
 
     return Scaffold(
       //
@@ -126,31 +134,76 @@ class _AllOffersViewState extends State<AllOffersView> {
                 ),
               ],
             ),
-              SizedBox(height: 20),
+              const SizedBox(height: 16),
+              TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _search = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'ابحث بالاسم...',
+                  hintStyle: GoogleFonts.cairo(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  suffixIcon: _search.trim().isNotEmpty
+                      ? GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _search = '';
+                            });
+                          },
+                          child: const Icon(Icons.close, color: Colors.grey),
+                        )
+                      : null,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : offers.isEmpty
-                  ? Center(
-                      child: Text(
-                        'لا توجد عروض حالياً',
-                        style: GoogleFonts.cairo(
-                          fontSize: 16,
-                          color: AppColors.four,
-                        ),
-                      ),
-                    )
-                  : GridView.builder(padding: EdgeInsets.only(bottom: 20,top: 20),
-                      itemCount: offers.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 15,
-                            crossAxisSpacing: 15,
-                            mainAxisExtent: 270,
+                      ? Center(
+                          child: Text(
+                            'لا توجد عروض حالياً',
+                            style: GoogleFonts.cairo(
+                              fontSize: 16,
+                              color: AppColors.four,
+                            ),
                           ),
-                      itemBuilder: (context, index) {
-                        final offer = offers[index];
+                        )
+                      : filteredOffers.isEmpty
+                          ? Center(
+                              child: Text(
+                                'لا يوجد عروض مطابقة للاسم',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 16,
+                                  color: AppColors.four,
+                                ),
+                              ),
+                            )
+                          : GridView.builder(
+                              padding: const EdgeInsets.only(bottom: 20, top: 20),
+                              itemCount: filteredOffers.length,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 15,
+                                crossAxisSpacing: 15,
+                                mainAxisExtent: 270,
+                              ),
+                              itemBuilder: (context, index) {
+                                final offer = filteredOffers[index];
                         return InkWell(
                           onTap: () {
                             Get.to(
@@ -297,7 +350,11 @@ class _AllOffersViewState extends State<AllOffersView> {
                                           ),
                                           Expanded(
                                             child: Text(
-                                              '${controller.offers[index].description}',
+                                              offer.description .toString()
+                                              .replaceAll(
+                                          '\n',
+                                          ' ',
+                                          ),
                                               style: TextStyle(
                                                 color: Colors
                                                     .grey[900],

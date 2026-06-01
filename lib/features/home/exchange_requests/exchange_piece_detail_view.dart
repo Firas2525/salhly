@@ -6,7 +6,10 @@ import 'package:salhly/features/home/exchange_requests/exchange_requests_control
 import 'package:salhly/features/home/exchange_requests/exchange_piece_request_model.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/utils/ui_utils.dart';
+import '../../../core/utils/phone_utils.dart';
+import '../controller/home_controller.dart';
 
 class ExchangePieceDetailView extends StatefulWidget {
   final int requestId;
@@ -187,6 +190,120 @@ class _ExchangePieceDetailViewState extends State<ExchangePieceDetailView> {
       MaterialPageRoute(
         builder: (context) => ExchangeOfferDetailPage(offer: offer),
         fullscreenDialog: true,
+      ),
+    );
+  }
+
+  String get _whatsappNumber {
+    if (Get.isRegistered<HomeController>()) {
+      return Get.find<HomeController>().contactUsModel?.whatsAppNumber ?? '';
+    }
+    return '';
+  }
+
+  String get _phoneNumber {
+    if (Get.isRegistered<HomeController>()) {
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
+    }
+    return '';
+  }
+
+  Future<void> _openWhatsApp() async {
+    final wa = _whatsappNumber;
+    if (wa.isEmpty) return;
+    await launchUrl(Uri.parse('https://wa.me/$wa'));
+  }
+
+  Future<void> _openPhoneCall() async {
+    final phone = _phoneNumber;
+    if (phone.isEmpty) return;
+    await dialPhoneNumber(phone);
+  }
+
+  Widget _buildContactSection() {
+    final hasPhone = _phoneNumber.isNotEmpty;
+    final hasWhatsApp = _whatsappNumber.isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue.shade200,
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'إذا أعجبك أحد العروض تواصل معنا',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: hasPhone ? _openPhoneCall : null,
+                  icon: const Icon(
+                    Icons.phone,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    'اتصل الآن',
+                    style: GoogleFonts.cairo(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        hasPhone ? Colors.blue : Colors.grey.shade400,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: hasWhatsApp ? _openWhatsApp : null,
+                  icon: const Icon(
+                    Icons.message,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    'واتساب',
+                    style: GoogleFonts.cairo(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: hasWhatsApp
+                        ? const Color(0xFF25D366)
+                        : Colors.grey.shade400,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -430,7 +547,7 @@ class _ExchangePieceDetailViewState extends State<ExchangePieceDetailView> {
                               Text(
                                 request.user.name,
                                 style: GoogleFonts.cairo(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -713,6 +830,8 @@ class _ExchangePieceDetailViewState extends State<ExchangePieceDetailView> {
                                     },
                                   ),
                                 ),
+                                const SizedBox(height: 16),
+                                _buildContactSection(),
                                 SizedBox(height: 14),
                               ],
                             ],
@@ -838,6 +957,32 @@ class _ExchangeOfferDetailPageState extends State<ExchangeOfferDetailPage> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  String get _whatsappNumber {
+    if (Get.isRegistered<HomeController>()) {
+      return Get.find<HomeController>().contactUsModel?.whatsAppNumber ?? '';
+    }
+    return '';
+  }
+
+  String get _phoneNumber {
+    if (Get.isRegistered<HomeController>()) {
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
+    }
+    return '';
+  }
+
+  Future<void> _openWhatsApp() async {
+    final wa = _whatsappNumber;
+    if (wa.isEmpty) return;
+    await launchUrl(Uri.parse('https://wa.me/$wa'));
+  }
+
+  Future<void> _openPhoneCall() async {
+    final phone = _phoneNumber;
+    if (phone.isEmpty) return;
+    await dialPhoneNumber(phone);
   }
 
   void _openImageViewer(String imageUrl) {
@@ -1152,15 +1297,92 @@ class _ExchangeOfferDetailPageState extends State<ExchangeOfferDetailPage> {
                           ),
                         ),
                         const SizedBox(height: 24),
+
+                        // Contact Section
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.blue.shade200,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'إذا أعجبك العرض تواصل معنا',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade900,
+                                ),
+                              ),
+                              SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _openPhoneCall,
+                                      icon: const Icon(
+                                        Icons.phone,
+                                        color: Colors.white,
+                                      ),
+                                      label: Text(
+                                        'اتصل الآن',
+                                        style: GoogleFonts.cairo(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _openWhatsApp,
+                                      icon: const Icon(
+                                        Icons.message,
+                                        color: Colors.white,
+                                      ),
+                                      label: Text(
+                                        'واتساب',
+                                        style: GoogleFonts.cairo(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF25D366),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ))),
         ],
       ),
-    );
+    )]));
   }
 }

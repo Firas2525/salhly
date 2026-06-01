@@ -344,6 +344,7 @@ class _ServiceOrderPageState extends State<ServiceOrderPage> {
                                     prefixIcon: Icon(
                                       Icons.note,
                                       color: AppColors.four,
+                              
                                     ),
                                     filled: true,
                                     fillColor: AppColors.four.withOpacity(0.04),
