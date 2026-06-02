@@ -28,8 +28,8 @@ android {
         applicationId = "com.salhlysyr.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 7       // عدّل مع كل إصدار جديد
-        versionName = "1.0.1" // عدّل النسخة
+        versionCode = 10      // عدّل مع كل إصدار جديد
+        versionName = "1.0.2" // عدّل النسخة
     }
 
     signingConfigs {

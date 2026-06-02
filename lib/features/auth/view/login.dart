@@ -45,7 +45,7 @@ class _LoginState extends State<Login> {
       _isContactLoading = false;
     });
 
-    final rawWa = _homeController.contactUsModel?.whatsAppNumber ?? '';
+    final rawWa = _homeController.contactUsModel?.phoneNumber ?? '';
     final wa = _normalizeWhatsAppNumber(rawWa);
     if (wa.isEmpty) {
       showAppSnackbar('خطأ', 'رقم الواتساب غير متوفر', isError: true);

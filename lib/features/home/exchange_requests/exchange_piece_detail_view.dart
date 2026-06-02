@@ -196,7 +196,7 @@ class _ExchangePieceDetailViewState extends State<ExchangePieceDetailView> {
 
   String get _whatsappNumber {
     if (Get.isRegistered<HomeController>()) {
-      return Get.find<HomeController>().contactUsModel?.whatsAppNumber ?? '';
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
     }
     return '';
   }
@@ -961,7 +961,7 @@ class _ExchangeOfferDetailPageState extends State<ExchangeOfferDetailPage> {
 
   String get _whatsappNumber {
     if (Get.isRegistered<HomeController>()) {
-      return Get.find<HomeController>().contactUsModel?.whatsAppNumber ?? '';
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
     }
     return '';
   }

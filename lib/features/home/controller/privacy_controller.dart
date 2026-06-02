@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../../app.dart';
 import '../../../core/utils/app_api.dart';
 import '../../../core/utils/ui_utils.dart';
+import '../../auth/view/login.dart';
 import '../model/privacy_policy_model.dart';
 
 class PrivacyController extends GetxController {

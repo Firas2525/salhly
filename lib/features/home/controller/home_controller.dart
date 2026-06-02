@@ -36,6 +36,30 @@ class HomeController extends GetxController {
   // current logged user
   UserModel? user;
   PrivacyPolicyModel? privacyPolicyModel;
+
+  Future<void> _forceLogout() async {
+    await App.prefs.clear();
+    user = null;
+    update();
+    Get.offAll(() => Login());
+  }
+
+  dynamic _tryDecodeBody(String body) {
+    try {
+      return jsonDecode(body);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isHtmlResponse(String body) {
+    final trimmed = body.trimLeft().toLowerCase();
+    return trimmed.startsWith('<!doctype html>') ||
+        trimmed.startsWith('<html') ||
+        trimmed.contains('<!doctype html>') ||
+        trimmed.contains('<html');
+  }
+
   File? imageFile;
 
   bool _isInitializing = false;
@@ -79,7 +103,14 @@ class HomeController extends GetxController {
       request.headers.addAll(headers);
 
       http.StreamedResponse response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
 
       print(data);
       if (response.statusCode == 200) {
@@ -90,7 +121,7 @@ class HomeController extends GetxController {
         update();
         Get.offAll(() => Login());
       } else {
-        showAppSnackbar("خطأ", "حدث خطأ", isError: true);
+        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
@@ -116,7 +147,14 @@ class HomeController extends GetxController {
       request.headers.addAll(headers);
 
       http.StreamedResponse response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
 
       print(response.statusCode);
       if (response.statusCode.toString().substring(0, 1) == "2") {
@@ -127,7 +165,7 @@ class HomeController extends GetxController {
         update();
         Get.offAll(() => Login());
       } else {
-        showAppSnackbar("خطأ", "حدث خطأ", isError: true);
+        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
@@ -153,24 +191,30 @@ class HomeController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      if (_isHtmlResponse(responseBody) || data == null) {
+        print('HomeController.getAds received HTML or invalid JSON, forcing logout');
+        await _forceLogout();
+        return;
+      }
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           response.statusCode == 220) {
-        print(data['data']);
+        print(data?['data'] ?? responseBody);
         banners = (data['data'] as List)
             .map((e) => BannerModel.fromJson(e))
             .toList();
-      } else if (response.statusCode == 403) {
-        await App.prefs.clear();
-        // Clear in-memory user and update UI
-        user = null;
-        update();
-        Get.offAll(() => Login());
       } else {
         if (showError) {
-          showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+          showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
         }
       }
     } catch (e) {
@@ -200,7 +244,19 @@ class HomeController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      if (_isHtmlResponse(responseBody) || data == null) {
+        print('HomeController.getServices received HTML or invalid JSON, forcing logout');
+        await _forceLogout();
+        return;
+      }
       print(data);
       print(response.statusCode);
       if (response.statusCode == 200 ||
@@ -211,7 +267,7 @@ class HomeController extends GetxController {
             .toList();
         print(data);
       } else {
-       // showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+       // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
@@ -238,9 +294,20 @@ class HomeController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
 
-      var data = jsonDecode(await response.stream.bytesToString());
-      print(data);
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      if (_isHtmlResponse(responseBody) || data == null) {
+        print('HomeController.getContactUs received HTML or invalid JSON, forcing logout');
+        await _forceLogout();
+        return;
+      }
+      print(data ?? responseBody);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
@@ -248,7 +315,7 @@ class HomeController extends GetxController {
         contactUsModel = ContactUsModel.fromJson(data["data"]);
         print("ContactUs Loaded Successfully");
       } else {
-       // showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+       // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
@@ -271,14 +338,23 @@ class HomeController extends GetxController {
       var request = http.Request('GET', uri);
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
 
       if (response.statusCode == 200) {
-        offers = (data['data'] as List)
-            .map((e) => Offer.fromJson(e))
-            .toList();
-        print("Offers loaded: ${offers.length}");
-        update();
+        if (data != null) {
+          offers = (data['data'] as List)
+              .map((e) => Offer.fromJson(e))
+              .toList();
+          print("Offers loaded: ${offers.length}");
+          update();
+        }
       } else {
         print("Error loading offers: ${response.statusCode}");
       }
@@ -298,14 +374,23 @@ class HomeController extends GetxController {
       var request = http.Request('GET', uri);
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
 
       if (response.statusCode == 200) {
-        exchangeOffers = (data['data'] as List)
-            .map((e) => Offer.fromJson(e))
-            .toList();
-        print("Exchange offers loaded: ${exchangeOffers.length}");
-        update();
+        if (data != null) {
+          exchangeOffers = (data['data'] as List)
+              .map((e) => Offer.fromJson(e))
+              .toList();
+          print("Exchange offers loaded: ${exchangeOffers.length}");
+          update();
+        }
       } else {
         print("Error loading exchange offers: ${response.statusCode}");
       }
@@ -329,9 +414,21 @@ class HomeController extends GetxController {
       var request = http.Request('GET', uri);
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
 
-      if (response.statusCode == 200 && data['data'] != null) {
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      if (_isHtmlResponse(responseBody) || data == null) {
+        print('HomeController.getAppAppearance received HTML or invalid JSON, forcing logout');
+        await _forceLogout();
+        return;
+      }
+
+      if (response.statusCode == 200 && data != null && data['data'] != null) {
         final appData = data['data'];
         appTitle = appData['title'] ?? '';
         appTopBackground = appData['top_background'] ?? '';
@@ -359,7 +456,7 @@ class HomeController extends GetxController {
 
         update();
       } else {
-        print('Error loading app appearance: ${response.statusCode} ${data['message'] ?? ''}');
+        print('Error loading app appearance: ${response.statusCode} ${data?['message'] ?? ''}');
       }
     } catch (e) {
       print('Exception loading app appearance: $e');
@@ -381,9 +478,20 @@ class HomeController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
 
-      var data = jsonDecode(await response.stream.bytesToString());
-      print(data);
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      if (_isHtmlResponse(responseBody) || data == null) {
+        print('HomeController.getAboutUs received HTML or invalid JSON, forcing logout');
+        await _forceLogout();
+        return;
+      }
+      print(data ?? responseBody);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
@@ -391,7 +499,7 @@ class HomeController extends GetxController {
         aboutUsModel = AboutUsModel.fromJson(data["data"]);
         print("AboutUs Loaded Successfully");
       } else {
-       // showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+       // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
@@ -418,8 +526,27 @@ class HomeController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+     print(88888);
+     print("${AppApi.baseUrl}/user/find");
+     print(response.statusCode);
+     print(responseBody);
+     print(88888);
+
+
+      var data = _tryDecodeBody(responseBody);
       print(response.statusCode);
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      if (_isHtmlResponse(responseBody) || data == null) {
+        print('Received HTML or invalid JSON from user/find, forcing logout');
+        await _forceLogout();
+        return;
+      }
+
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           response.statusCode == 210 ||
@@ -433,7 +560,7 @@ class HomeController extends GetxController {
           }
         }
       } else {
-     //   showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+     //   showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
@@ -482,17 +609,27 @@ class HomeController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
 
-      var data = jsonDecode(await response.stream.bytesToString());
-      print(data);
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      var data = _tryDecodeBody(responseBody);
+      if (_isHtmlResponse(responseBody) || data == null) {
+        print('HomeController.getPrivacyPolicy received HTML or invalid JSON, forcing logout');
+        await _forceLogout();
+        return;
+      }
+      print(data ?? responseBody);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           response.statusCode == 220) {
         privacyPolicyModel = PrivacyPolicyModel.fromJson(data["data"]);
-
       } else {
-      //  showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ", isError: true);
+      //  showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);

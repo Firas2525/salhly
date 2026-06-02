@@ -334,7 +334,7 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
 
   String get _whatsappNumber {
     if (Get.isRegistered<HomeController>()) {
-      return Get.find<HomeController>().contactUsModel?.whatsAppNumber ?? '';
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
     }
     return '';
   }

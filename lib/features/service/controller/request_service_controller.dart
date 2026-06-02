@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../app.dart';
 import '../../../core/utils/app_api.dart';
 import '../../../core/utils/ui_utils.dart';
+import '../../auth/view/login.dart';
 import '../model/service_model.dart';
 
 class RequestServiceController extends GetxController {
@@ -67,16 +68,23 @@ class RequestServiceController extends GetxController {
       var request = http.Request('GET', uri);
       request.headers.addAll(headers);
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
 
-      var data = jsonDecode(await response.stream.bytesToString());
-      final List<dynamic> dataList = data['data'];
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await App.prefs.clear();
+        Get.offAll(() => Login());
+        return;
+      }
+
+      var data = jsonDecode(responseBody);
+      final List<dynamic> dataList = data?['data'] ?? [];
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           response.statusCode == 210) {
         subServices = dataList.map((e) => SubServiceModel.fromJson(e)).toList();
       } else {
-        showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ");
+        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ");
       }
     } catch (e) {
       print(e);
@@ -348,6 +356,13 @@ class RequestServiceController extends GetxController {
 
       final streamed = await request.send();
       final respStr = await streamed.stream.bytesToString();
+
+      if (streamed.statusCode == 401 || streamed.statusCode == 403) {
+        await App.prefs.clear();
+        Get.offAll(() => Login());
+        return;
+      }
+
       final respJson = jsonDecode(respStr);
        print(respJson);
       if (streamed.statusCode == 200 || streamed.statusCode == 201) {
@@ -359,8 +374,6 @@ class RequestServiceController extends GetxController {
         descriptionController.clear();
         imageFiles.clear();
         await deleteAudio();
-      } else if (streamed.statusCode == 401) {
-        showAppSnackbar('تنبيه', 'غير مصرح. الرجاء تسجيل الدخول مجدداً');
       } else {
         showAppSnackbar('خطأ', respJson['message'] ?? 'حدث خطأ أثناء الإرسال');
       }

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../../app.dart';
 import '../../../core/utils/app_api.dart';
 import '../../../core/utils/ui_utils.dart';
+import '../../auth/view/login.dart';
 import '../model/request_model.dart';
 
 class RequestsController extends GetxController {
@@ -30,16 +31,23 @@ class RequestsController extends GetxController {
       var request = http.Request('GET', uri);
       request.headers.addAll(headers);
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
 
-      var data = jsonDecode(await response.stream.bytesToString());
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await App.prefs.clear();
+        Get.offAll(() => Login());
+        return;
+      }
+
+      var data = jsonDecode(responseBody);
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           response.statusCode == 210) {
-        final List<dynamic> dataList = data['data'] ?? [];
+        final List<dynamic> dataList = data?['data'] ?? [];
         print(dataList);
         requests = dataList.map((e) => RequestModel.fromJson(e)).toList();
       } else {
-        showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ");
+        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ");
       }
     } catch (e) {
       print(e);

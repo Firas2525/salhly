@@ -378,7 +378,7 @@ class _SellPieceViewState extends State<SellPieceView> {
 
   String get _whatsappNumber {
     if (Get.isRegistered<HomeController>()) {
-      return Get.find<HomeController>().contactUsModel?.whatsAppNumber ?? '';
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
     }
     return '';
   }

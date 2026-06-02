@@ -9,6 +9,7 @@ import '../../../app.dart';
 import '../../../core/utils/app_api.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../main.dart';
+import '../../auth/view/login.dart';
 import '../../home/view/home_page_view.dart';
 import '../../home/view/new_home_page_view.dart';
 import '../../home/controller/home_controller.dart';
@@ -67,7 +68,15 @@ class UserController extends GetxController {
       }
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await App.prefs.clear();
+        Get.offAll(() => Login());
+        return;
+      }
+
+      var data = jsonDecode(responseBody);
       print(response.statusCode);
 
       if (response.statusCode == 200 ||
@@ -114,7 +123,15 @@ class UserController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await App.prefs.clear();
+        Get.offAll(() => Login());
+        return;
+      }
+
+      var data = jsonDecode(responseBody);
       print(response.statusCode);
 
       if (response.statusCode == 200 ||
@@ -159,7 +176,15 @@ class UserController extends GetxController {
 
       request.headers.addAll(headers);
       var response = await request.send();
-      var data = jsonDecode(await response.stream.bytesToString());
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await App.prefs.clear();
+        Get.offAll(() => Login());
+        return;
+      }
+
+      var data = jsonDecode(responseBody);
       print(response.statusCode);
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
