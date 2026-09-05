@@ -2893,7 +2893,7 @@ Widget _buildContactIconCircular({
                       )
               : Center(
                   child: isFontAwesome
-                      ? FaIcon(icon, color: Colors.white, size: size * 0.42)
+                      ? Icon(icon, color: Colors.white, size: size * 0.42)
                       : Icon(icon, color: Colors.white, size: size * 0.45),
                 ),
         ),

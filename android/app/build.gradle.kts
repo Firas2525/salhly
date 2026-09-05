@@ -28,7 +28,7 @@ android {
         applicationId = "com.salhlysyr.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 10      // عدّل مع كل إصدار جديد
+        versionCode = 11      // عدّل مع كل إصدار جديد
         versionName = "1.0.2" // عدّل النسخة
     }
 

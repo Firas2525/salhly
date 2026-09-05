@@ -360,8 +360,8 @@ class _AboutContactViewState extends State<AboutContactView>
                           color: Color(0xFF2196F3),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: FaIcon(
-                          FontAwesomeIcons.headset,
+                        child: Icon(
+                          IconData(0xf6cf, fontFamily: 'FontAwesomeSolid', fontPackage: 'font_awesome_flutter'),
                           color: Colors.white,
                           size: 18,
                         ),
@@ -410,7 +410,7 @@ class _AboutContactViewState extends State<AboutContactView>
             // Contact items
             if (contactData.phoneNumber.isNotEmpty)
               _ContactMethodCard(
-                icon: FontAwesomeIcons.phone,
+                icon: FontAwesomeIcons.phone as IconData,
                 label: 'الهاتف',
                 value: contactData.phoneNumber,
                 color: Color(0xFF4CAF50),
@@ -420,7 +420,7 @@ class _AboutContactViewState extends State<AboutContactView>
 
             if (contactData.whatsAppNumber.isNotEmpty)
               _ContactMethodCard(
-                icon: FontAwesomeIcons.whatsapp,
+                icon: FontAwesomeIcons.whatsapp as IconData,
                 label: 'واتس آب',
                 value: contactData.whatsAppNumber,
                 color: Color(0xFF25D366),
@@ -431,7 +431,7 @@ class _AboutContactViewState extends State<AboutContactView>
 
             if (contactData.gmail.isNotEmpty)
               _ContactMethodCard(
-                icon: FontAwesomeIcons.envelope,
+                icon: FontAwesomeIcons.envelope as IconData,
                 label: 'البريد الإلكتروني',
                 value: contactData.gmail,
                 color: Color(0xFFFF9800),
@@ -441,7 +441,7 @@ class _AboutContactViewState extends State<AboutContactView>
 
             if (contactData.websiteLink.isNotEmpty)
               _ContactMethodCard(
-                icon: FontAwesomeIcons.globe,
+                icon: FontAwesomeIcons.globe as IconData,
                 label: 'الموقع الإلكتروني',
                 value: contactData.websiteLink,
                 color: Color(0xFF2196F3),
@@ -468,21 +468,21 @@ class _AboutContactViewState extends State<AboutContactView>
                 children: [
                   if (contactData.facebook.isNotEmpty)
                     _SocialIconButton(
-                      icon: FontAwesomeIcons.facebook,
+                      icon: FontAwesomeIcons.facebook as IconData,
                       color: Color(0xFF1877F2),
                       onTap: () => _launchUrl(contactData.facebook),
                     ),
                   if (contactData.facebook.isNotEmpty) SizedBox(width: 16),
                   if (contactData.instagram.isNotEmpty)
                     _SocialIconButton(
-                      icon: FontAwesomeIcons.instagram,
+                      icon: FontAwesomeIcons.instagram as IconData,
                       color: Color(0xFFE4405F),
                       onTap: () => _launchUrl(contactData.instagram),
                     ),
                   if (contactData.instagram.isNotEmpty) SizedBox(width: 16),
                   if (contactData.linkedin.isNotEmpty)
                     _SocialIconButton(
-                      icon: FontAwesomeIcons.linkedin,
+                      icon: FontAwesomeIcons.linkedin as IconData,
                       color: Color(0xFF0077B5),
                       onTap: () => _launchUrl(contactData.linkedin),
                     ),
@@ -621,7 +621,7 @@ class _ContactMethodCard extends StatelessWidget {
                 color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: FaIcon(icon, color: color, size: 18),
+              child: Icon(icon, color: color, size: 18),
             ),
             SizedBox(width: 14),
             Expanded(
@@ -684,7 +684,7 @@ class _SocialIconButton extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: color.withOpacity(0.25)),
         ),
-        child: FaIcon(icon, color: color, size: 24),
+        child: Icon(icon, color: color, size: 24),
       ),
     );
   }

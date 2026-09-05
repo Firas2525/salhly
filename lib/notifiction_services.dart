@@ -117,6 +117,7 @@ class NotificationServices {
       importance: Importance.max,
       priority: Priority.max,
       playSound: true,
+      sound: RawResourceAndroidNotificationSound('notification_sound'),
       ticker: 'ticker',
     );
 
