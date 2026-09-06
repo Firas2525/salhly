@@ -11,7 +11,7 @@ import '../../../core/utils/ui_utils.dart';
 import '../../../core/utils/app_api.dart';
 import '../../../main.dart';
 import '../../../notifiction_services.dart';
-import '../../home/view/home_page_view.dart';
+import '../../home/view/home_navigation_view.dart';
 import '../../home/view/new_home_page_view.dart';
 import '../../home/controller/home_controller.dart';
 import '../../home_worker/view/home_worker_view.dart';
@@ -111,7 +111,7 @@ class AuthController extends GetxController {
         if (data['data']['role_id'].toString() == "3") {
           Get.offAll(() => HomeWorkerView());
         } else {
-          Get.offAll(() => HomePageView());
+          Get.offAll(() => const HomeNavigationView());
         }
       } else {
         showAppSnackbar("خطأ", "رقم الهاتف أو كلمة المرور غير صحيحة");
@@ -162,7 +162,7 @@ class AuthController extends GetxController {
           final homeController = Get.put(HomeController());
           await homeController.getUser();
         }
-        Get.offAll(() => HomePageView());
+        Get.offAll(() => const HomeNavigationView());
       } else {
         showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ");
       }

@@ -25,6 +25,7 @@ class HomeController extends GetxController {
   bool isLoading = false;
   List<BannerModel> banners = [];
   List<ServicesModel> services = [];
+  List<ServicesModel> goldenServices = [];
   List<Offer> offers = [];
   List<Offer> exchangeOffers = [];
   TextEditingController myPhone = TextEditingController();
@@ -276,6 +277,38 @@ class HomeController extends GetxController {
         "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
         isError: true,
       );*/
+    }
+  }
+
+  getGoldenServices() async {
+    try {
+      final token = App.prefs.getString('token');
+      final headers = {
+        'Accept': 'application/json',
+        'Accept-Language': 'ar',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      };
+      final response = await http.get(
+        Uri.parse(AppApi.getGoldenServices),
+        headers: headers,
+      );
+
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      final data = _tryDecodeBody(response.body);
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          data is Map<String, dynamic> &&
+          data['data'] is List) {
+        goldenServices = (data['data'] as List)
+            .map((item) => ServicesModel.fromJson(item))
+            .toList();
+      }
+    } catch (e) {
+      print('Exception loading golden services: $e');
     }
   }
 
@@ -669,6 +702,7 @@ class HomeController extends GetxController {
         NotificationServices().getDeviceToken(),
         getAds(),
         getServices(),
+        getGoldenServices(),
         getAboutUs(),
         getAppAppearance(),
         getOffers(),

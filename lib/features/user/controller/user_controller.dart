@@ -10,7 +10,7 @@ import '../../../core/utils/app_api.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../main.dart';
 import '../../auth/view/login.dart';
-import '../../home/view/home_page_view.dart';
+import '../../home/view/home_navigation_view.dart';
 import '../../home/view/new_home_page_view.dart';
 import '../../home/controller/home_controller.dart';
 
@@ -90,7 +90,7 @@ class UserController extends GetxController {
         } catch (e) {
           print('Could not refresh user data: $e');
         }
-        Get.offAll(() => HomePageView());
+        Get.offAll(() => const HomeNavigationView());
       } else {
         showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ");
       }
@@ -145,7 +145,7 @@ class UserController extends GetxController {
         } catch (e) {
           print('Could not refresh user data: $e');
         }
-        Get.offAll(() => HomePageView());
+        Get.offAll(() => const HomeNavigationView());
       } else {
         showAppSnackbar("خطأ", data['message'] ?? "حدث خطأ");
       }

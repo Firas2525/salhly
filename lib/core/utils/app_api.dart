@@ -51,6 +51,7 @@ class AppApi {
 
   //salon
   static const String getServices = "$baseUrl/$version/services";
+    static const String getGoldenServices = '$baseUrl/service/is_golden';
   static const String bookSalon = "$baseUrl/$version/booking/booking-now";
   static const String getBookedAppoint =
       "$baseUrl/$version/booking/user-booking";
