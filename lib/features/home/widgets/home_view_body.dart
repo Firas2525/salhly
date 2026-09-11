@@ -36,6 +36,7 @@ import '../view/sell_piece_view.dart';
 import '../../notifications/view/notifications_page.dart';
 import 'animated_logo.dart';
 import 'contact_icon_widget.dart';
+import 'golden_service_card.dart';
 import 'home_header.dart';
 import 'offer_card_widget_buttons.dart';
 
@@ -96,34 +97,34 @@ class _HomeViewBodyState extends State<HomeViewBody>
         builder: (controller) {
           return controller.isLoading
               ? Shimmer.fromColors(
-                  baseColor: Colors.grey.shade300,
-                  highlightColor: Colors.grey.shade100,
-                  child: SingleChildScrollView(
-                    physics: NeverScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Header skeleton
-                        SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                              ),
-                              child: SizedBox(
-                                height: 100,
-                                width: 120,
-                                child: GestureDetector(
-                                  child: AnimatedLogo(
-                                    assetPath: ImgAsset.whiteLogo,
-                                  ),
-                                ),
-                              ),
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade100,
+            child: SingleChildScrollView(
+              physics: NeverScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header skeleton
+                  SizedBox(height: 27),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                        ),
+                        child: SizedBox(
+                          height: 100,
+                          width: 120,
+                          child: GestureDetector(
+                            child: AnimatedLogo(
+                              assetPath: ImgAsset.whiteLogo,
                             ),
+                          ),
+                        ),
+                      ),
 
-                            /*Padding(
+                      /*Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             " صلحلي  ",
@@ -134,231 +135,229 @@ class _HomeViewBodyState extends State<HomeViewBody>
             ),
           ),
         ),*/
-                            Row(
-                              children: [
-                                Builder(
-                                  builder: (context) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(left: 0.0),
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(10),
-                                        onTap: () => Get.to(
-                                          () => const NotificationsPage(),
-                                        ),
-                                        child: Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(
-                                              0.1,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                          child: GetBuilder<HomeController>(
-                                            builder: (homeCtrl) {
-                                              return Stack(
-                                                alignment: Alignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.notifications,
-                                                    color: Colors.white,
-                                                    size: 24,
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                Builder(
-                                  builder: (context) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                        left: 16.0,
-                                        right: 10,
-                                      ),
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(10),
-                                        onTap: () =>
-                                            Scaffold.of(context).openDrawer(),
-                                        child: Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(
-                                              0.1,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            Icons.menu,
-                                            color: Colors.white,
-                                            size: 24,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Container(
-                                width: 160,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
+                      Row(
+                        children: [
+                          Builder(
+                            builder: (context) {
+                              return Padding(
+                                padding: const EdgeInsets.only(left: 0.0),
+                                child: InkWell(
                                   borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                        // Ads skeleton
-                        SizedBox(
-                          height: 180,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            physics: NeverScrollableScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: 2,
-                            itemBuilder: (context, index) {
-                              return Container(
-                                margin: EdgeInsets.only(left: 14),
-                                width: 276,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Container(
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: Colors.grey.shade200),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 8,
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      height: double.infinity,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
+                                  onTap: () => Get.to(
+                                        () => const NotificationsPage(),
                                   ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Container(
-                                      height: double.infinity,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(14),
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(
+                                        0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(
+                                        10,
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Container(
-                                      height: double.infinity,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
+                                    child: GetBuilder<HomeController>(
+                                      builder: (homeCtrl) {
+                                        return Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.notifications,
+                                              color: Colors.white,
+                                              size: 24,
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  mainAxisSpacing: 14,
-                                  crossAxisSpacing: 14,
-                                  childAspectRatio: 1,
-                                ),
-                            itemCount: 9,
-                            itemBuilder: (context, index) {
-                              return GestureDetector(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: AppColors.four.withOpacity(0.12),
-                                      width: 1,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.06),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
                                   ),
                                 ),
                               );
                             },
                           ),
+                          Builder(
+                            builder: (context) {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 16.0,
+                                  right: 10,
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () =>
+                                      Scaffold.of(context).openDrawer(),
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(
+                                        0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(
+                                        10,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      Icons.menu,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        SizedBox(height: 24),
+                        SizedBox(width: 12),
+                        Container(
+                          width: 160,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                )
-              : SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 15),
-                      HeaderHomePage(logoKey: logoKey),
-                      
-                     // SizedBox(height: 5),
-                      // نص مع أيقونة للإعلانات
-                     /* Padding(
+                  SizedBox(height: 12),
+                  // Ads skeleton
+                  SizedBox(
+                    height: 180,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: 2,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: EdgeInsets.only(left: 14),
+                          width: 276,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                height: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                height: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: 9,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.four.withOpacity(0.12),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                ],
+              ),
+            ),
+          )
+              : Column(
+              children: [
+                SizedBox(height: 15),
+                HeaderHomePage(logoKey: logoKey),
+
+                // SizedBox(height: 5),
+                // نص مع أيقونة للإعلانات
+                /* Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Row(
                           children: [
@@ -376,96 +375,112 @@ class _HomeViewBodyState extends State<HomeViewBody>
                         ),
                       ),
                       SizedBox(height: 10),*/
-                      // تغيير من PageView إلى ListView عمودي مع تصغير الحجم
-                      SizedBox(
-                        height: 180, // تصغير من 250 إلى 200
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: controller.banners.length,
-                          itemBuilder: (context, index) {
-                            final banner = controller.banners[index];
-                            return GestureDetector(
-                              onTap: () {
-                                final desc = banner.description ?? '';
-                                if (desc.isNotEmpty) {
-                                  Get.to(
-                                    () => BannerDetailView(banner: banner),
-                                  );
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10.0,
-                                  vertical: 8.0,
-                                ),
-                                child: Container(
-                                  height: 160, // تصغير الارتفاع
-                                  width: 284.44,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(12),
-                                    image: banner.image != ""
-                                        ? DecorationImage(
-                                            image: CachedNetworkImageProvider(
-                                              "https://www.salhly.lareenmedco.com/storage/${banner.image}",
-                                            ),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : null,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                    ),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      padding: const EdgeInsets.only(
-                                        left: 5,
-                                        right: 5,
-                                      ),
-                                      child: banner.image == ""
-                                          ? Center(
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  SizedBox(
-                                                    height: 60,
-                                                    width: 60,
-                                                    child: Image.asset(
-                                                      'assets/images/logo2.png',
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  Text(
-                                                    banner.title,
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.cairo(
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            )
-                                          : Container(),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                // تغيير من PageView إلى ListView عمودي مع تصغير الحجم
+                SizedBox(
+                  height: 180, // تصغير من 250 إلى 200
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: controller.banners.length,
+                    itemBuilder: (context, index) {
+                      final banner = controller.banners[index];
+                      return GestureDetector(
+                        onTap: () {
+                          final desc = banner.description ?? '';
+                          if (desc.isNotEmpty) {
+                            Get.to(
+                                  () => BannerDetailView(banner: banner),
                             );
-                          },
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10.0,
+                            vertical: 8.0,
+                          ),
+                          child: Container(
+                            height: 160, // تصغير الارتفاع
+                            width: 284.44,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(12),
+                              image: banner.image != ""
+                                  ? DecorationImage(
+                                image: CachedNetworkImageProvider(
+                                  "https://www.salhly.lareenmedco.com/storage/${banner.image}",
+                                ),
+                                fit: BoxFit.cover,
+                              )
+                                  : null,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 15,
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.only(
+                                  left: 5,
+                                  right: 5,
+                                ),
+                                child: banner.image == ""
+                                    ? Center(
+                                  child: Column(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        height: 60,
+                                        width: 60,
+                                        child: Image.asset(
+                                          'assets/images/logo2.png',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        banner.title,
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.cairo(
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                                    : Container(),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 10),
+                      );
+                    },
+                  ),
+                ),
+
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                      if (controller.goldenServices.isNotEmpty)
+                        SizedBox(height: 10),
 
                       if (controller.goldenServices.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(left: 16.0,right: 16.0,bottom: 16.0,),
+                          padding: const EdgeInsets.only(
+                            left: 16.0,
+                            right: 16.0,
+                            bottom: 12.0,
+                          ),
                           child: Row(
                             children: [
-                              Icon(Icons.campaign, color: Colors.blue, size: 22),
+                              Icon(
+                                Icons.workspace_premium_rounded,
+                                color: Colors.blue,
+                                size: 22,
+                              ),
                               const SizedBox(width: 12),
                               Text(
                                 'خدماتنا الذهبية',
@@ -475,172 +490,25 @@ class _HomeViewBodyState extends State<HomeViewBody>
                                   color: Colors.blue,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                                ],
+                              ),
+                            ),
+
+
+                      const SizedBox(height: 12),
                       if (controller.goldenServices.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: SizedBox(
-                            height: 100,
+                            height: 112,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              itemCount: controller.goldenServices.length + 1,
+                              itemCount: controller.goldenServices.length,
                               separatorBuilder: (_, __) =>
-                                  const SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               itemBuilder: (context, index) {
-                                final goldenService =
-                                    controller.goldenServices[0];
-
-                                return GestureDetector(
-                                  onTap: () {
-                                    Get.to(
-                                          () => ServiceView(),
-                                      arguments: {
-                                        "serviceId": controller
-                                            .services[index]
-                                            .id,
-                                      },
-                                    );
-                                  },
-                                  child: Container(width: 120,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius:
-                                      BorderRadius.circular(
-                                        16,
-                                      ),
-                                      border: Border.all(
-                                        color: AppColors
-                                            .four
-                                            .withOpacity(
-                                          0.12,
-                                        ),
-                                        width: 1,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors
-                                              .black
-                                              .withOpacity(
-                                            0.06,
-                                          ),
-                                          blurRadius: 10,
-                                          offset:
-                                          const Offset(
-                                            0,
-                                            4,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment
-                                          .center,
-                                      mainAxisAlignment:
-                                      MainAxisAlignment
-                                          .center,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                          BorderRadius.circular(
-                                            12,
-                                          ),
-                                          child: CachedNetworkImage(
-                                            imageUrl:
-                                            "https://www.salhly.lareenmedco.com/storage/${controller.services[index].image}",
-                                            height: 50,
-                                            fit: BoxFit
-                                                .contain,
-                                            placeholder: (context, url) {
-                                              return Container(
-                                                height: 60,
-                                                decoration: BoxDecoration(
-                                                  color: Colors
-                                                      .grey
-                                                      .shade200,
-                                                  borderRadius:
-                                                  BorderRadius.circular(
-                                                    12,
-                                                  ),
-                                                ),
-                                                child: Shimmer.fromColors(
-                                                  baseColor: Colors
-                                                      .grey
-                                                      .shade300,
-                                                  highlightColor: Colors
-                                                      .grey
-                                                      .shade100,
-                                                  child: Container(
-                                                    color: Colors
-                                                        .white,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                            errorWidget:
-                                                (
-                                                context,
-                                                url,
-                                                error,
-                                                ) {
-                                              return Container(
-                                                height:
-                                                60,
-                                                decoration: BoxDecoration(
-                                                  color: Colors
-                                                      .grey
-                                                      .shade200,
-                                                  borderRadius: BorderRadius.circular(
-                                                    12,
-                                                  ),
-                                                ),
-                                                child: Center(
-                                                  child: Icon(
-                                                    Icons.error_outline,
-                                                    color:
-                                                    Colors.grey,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 8,
-                                        ),
-                                        Padding(
-                                          padding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal:
-                                            4,
-                                          ),
-                                          child: Text(
-                                            controller
-                                                .services[index]
-                                                .title,
-                                            style: GoogleFonts.cairo(
-                                              fontSize: 11,
-                                              fontWeight:
-                                              FontWeight
-                                                  .bold,
-                                              color:
-                                              AppColors
-                                                  .four,
-                                            ),
-                                            textAlign:
-                                            TextAlign
-                                                .center,
-                                            maxLines: 2,
-                                            overflow:
-                                            TextOverflow
-                                                .ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                return GoldenServiceCard(
+                                  service: controller.goldenServices[index],
                                 );
                               },
                             ),
@@ -746,559 +614,553 @@ class _HomeViewBodyState extends State<HomeViewBody>
                           ],
                         ),
                       ),
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height - 520,
-                        child:Column(
-                          children: [
-                            Expanded(
-                              child: controller.services.isEmpty
-                                  ? Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
+                      controller.services.isEmpty
+                            ? Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                          ),
+                          child: Shimmer.fromColors(
+                            baseColor: Colors.grey.shade300,
+                            highlightColor:
+                            Colors.grey.shade100,
+                            child: Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment
+                                  .spaceBetween,
+                              children: List.generate(3, (i) {
+                                final width =
+                                    (MediaQuery.of(
+                                      context,
+                                    ).size.width -
+                                        64) /
+                                        3;
+                                return Column(
+                                  children: [
+                                    Container(
+                                      width: width,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                        BorderRadius.circular(
+                                          10,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      width: 60,
+                                      height: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                );
+                              }),
+                            ),
+                          ),
+                        ) // قمت بفصل الشيمر في دالة بالأسفل للترتيب
+                            : CustomScrollView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          slivers: [
+                            // 1. مسافة بادئة علوية (اختياري)
+
+                            // 2. شبكة العناصر (الغريد فيو)
+                            SliverPadding(
+                              padding:
+                              const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              sliver: SliverGrid(
+                                gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 15,
+                                  crossAxisSpacing: 15,
+                                  childAspectRatio: 1,
                                 ),
-                                child: Shimmer.fromColors(
-                                  baseColor: Colors.grey.shade300,
-                                  highlightColor:
-                                  Colors.grey.shade100,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .spaceBetween,
-                                    children: List.generate(3, (i) {
-                                      final width =
-                                          (MediaQuery.of(
-                                            context,
-                                          ).size.width -
-                                              64) /
-                                              3;
-                                      return Column(
-                                        children: [
-                                          Container(
-                                            width: width,
-                                            height: 80,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
+                                delegate: SliverChildBuilderDelegate(
+                                      (context, index) {
+                                    final service = controller
+                                        .services[index];
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Get.to(
+                                              () => ServiceView(),
+                                          arguments: {
+                                            "serviceId": controller
+                                                .services[index]
+                                                .id,
+                                          },
+                                        );
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                          BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors
+                                                .four
+                                                .withOpacity(
+                                              0.12,
+                                            ),
+                                            width: 1,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors
+                                                  .black
+                                                  .withOpacity(
+                                                0.06,
+                                              ),
+                                              blurRadius: 10,
+                                              offset:
+                                              const Offset(
+                                                0,
+                                                4,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment
+                                              .center,
+                                          mainAxisAlignment:
+                                          MainAxisAlignment
+                                              .center,
+                                          children: [
+                                            ClipRRect(
                                               borderRadius:
                                               BorderRadius.circular(
-                                                10,
+                                                12,
                                               ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Container(
-                                            width: 60,
-                                            height: 12,
-                                            color: Colors.white,
-                                          ),
-                                        ],
-                                      );
-                                    }),
-                                  ),
-                                ),
-                              ) // قمت بفصل الشيمر في دالة بالأسفل للترتيب
-                                  : CustomScrollView(
-                                physics:
-                                const BouncingScrollPhysics(),
-                                slivers: [
-                                  // 1. مسافة بادئة علوية (اختياري)
-
-                                  // 2. شبكة العناصر (الغريد فيو)
-                                  SliverPadding(
-                                    padding:
-                                    const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                    ),
-                                    sliver: SliverGrid(
-                                      gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 3,
-                                        mainAxisSpacing: 15,
-                                        crossAxisSpacing: 15,
-                                        childAspectRatio: 1,
-                                      ),
-                                      delegate: SliverChildBuilderDelegate(
-                                            (context, index) {
-                                          final service = controller
-                                              .services[index];
-                                          return GestureDetector(
-                                            onTap: () {
-                                              Get.to(
-                                                    () => ServiceView(),
-                                                arguments: {
-                                                  "serviceId": controller
-                                                      .services[index]
-                                                      .id,
-                                                },
-                                              );
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                BorderRadius.circular(
-                                                  16,
-                                                ),
-                                                border: Border.all(
-                                                  color: AppColors
-                                                      .four
-                                                      .withOpacity(
-                                                    0.12,
-                                                  ),
-                                                  width: 1,
-                                                ),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors
-                                                        .black
-                                                        .withOpacity(
-                                                      0.06,
-                                                    ),
-                                                    blurRadius: 10,
-                                                    offset:
-                                                    const Offset(
-                                                      0,
-                                                      4,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                CrossAxisAlignment
-                                                    .center,
-                                                mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .center,
-                                                children: [
-                                                  ClipRRect(
-                                                    borderRadius:
-                                                    BorderRadius.circular(
-                                                      12,
-                                                    ),
-                                                    child: CachedNetworkImage(
-                                                      imageUrl:
-                                                      "https://www.salhly.lareenmedco.com/storage/${controller.services[index].image}",
-                                                      height: 50,
-                                                      fit: BoxFit
-                                                          .contain,
-                                                      placeholder: (context, url) {
-                                                        return Container(
-                                                          height: 60,
-                                                          decoration: BoxDecoration(
-                                                            color: Colors
-                                                                .grey
-                                                                .shade200,
-                                                            borderRadius:
-                                                            BorderRadius.circular(
-                                                              12,
-                                                            ),
-                                                          ),
-                                                          child: Shimmer.fromColors(
-                                                            baseColor: Colors
-                                                                .grey
-                                                                .shade300,
-                                                            highlightColor: Colors
-                                                                .grey
-                                                                .shade100,
-                                                            child: Container(
-                                                              color: Colors
-                                                                  .white,
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                      errorWidget:
-                                                          (
-                                                          context,
-                                                          url,
-                                                          error,
-                                                          ) {
-                                                        return Container(
-                                                          height:
-                                                          60,
-                                                          decoration: BoxDecoration(
-                                                            color: Colors
-                                                                .grey
-                                                                .shade200,
-                                                            borderRadius: BorderRadius.circular(
-                                                              12,
-                                                            ),
-                                                          ),
-                                                          child: Center(
-                                                            child: Icon(
-                                                              Icons.error_outline,
-                                                              color:
-                                                              Colors.grey,
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 8,
-                                                  ),
-                                                  Padding(
-                                                    padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal:
-                                                      4,
-                                                    ),
-                                                    child: Text(
-                                                      controller
-                                                          .services[index]
-                                                          .title,
-                                                      style: GoogleFonts.cairo(
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                        FontWeight
-                                                            .bold,
-                                                        color:
-                                                        AppColors
-                                                            .four,
+                                              child: CachedNetworkImage(
+                                                imageUrl:
+                                                "https://www.salhly.lareenmedco.com/storage/${controller.services[index].image}",
+                                                height: 50,
+                                                fit: BoxFit
+                                                    .contain,
+                                                placeholder: (context, url) {
+                                                  return Container(
+                                                    height: 60,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors
+                                                          .grey
+                                                          .shade200,
+                                                      borderRadius:
+                                                      BorderRadius.circular(
+                                                        12,
                                                       ),
-                                                      textAlign:
-                                                      TextAlign
-                                                          .center,
-                                                      maxLines: 2,
-                                                      overflow:
-                                                      TextOverflow
-                                                          .ellipsis,
                                                     ),
-                                                  ),
-                                                ],
+                                                    child: Shimmer.fromColors(
+                                                      baseColor: Colors
+                                                          .grey
+                                                          .shade300,
+                                                      highlightColor: Colors
+                                                          .grey
+                                                          .shade100,
+                                                      child: Container(
+                                                        color: Colors
+                                                            .white,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                errorWidget:
+                                                    (
+                                                    context,
+                                                    url,
+                                                    error,
+                                                    ) {
+                                                  return Container(
+                                                    height:
+                                                    60,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors
+                                                          .grey
+                                                          .shade200,
+                                                      borderRadius: BorderRadius.circular(
+                                                        12,
+                                                      ),
+                                                    ),
+                                                    child: Center(
+                                                      child: Icon(
+                                                        Icons.error_outline,
+                                                        color:
+                                                        Colors.grey,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                             ),
-                                          ); // عنصر الخدمة الخاص بك
-                                        },
-                                        childCount: controller
-                                            .services
-                                            .length,
-                                      ),
-                                    ),
-                                  ),
-
-                                  // 3. العنصر الذي تريده في النهاية (الـ Row)
-                                  SliverToBoxAdapter(
-                                    child: Padding(
-                                      padding:
-                                      const EdgeInsets.symmetric(
-                                        vertical: 30,
-                                        horizontal: 20,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  Navigator.of(
-                                                    context,
-                                                  ).pop();
-                                                },
-                                                child: Icon(
-                                                  Icons.phone_android,
-                                                  color: Colors.blue,
-                                                  size: 28,
-                                                ),
+                                            const SizedBox(
+                                              height: 8,
+                                            ),
+                                            Padding(
+                                              padding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal:
+                                                4,
                                               ),
-                                              const SizedBox(
-                                                width: 12,
-                                              ),
-                                              Text(
-                                                'معلومات التواصل',
-                                                style:
-                                                GoogleFonts.cairo(
-                                                  fontSize: 18,
+                                              child: Text(
+                                                controller
+                                                    .services[index]
+                                                    .title,
+                                                style: GoogleFonts.cairo(
+                                                  fontSize: 11,
                                                   fontWeight:
                                                   FontWeight
                                                       .bold,
                                                   color:
-                                                  Colors.blue,
+                                                  AppColors
+                                                      .four,
                                                 ),
+                                                textAlign:
+                                                TextAlign
+                                                    .center,
+                                                maxLines: 2,
+                                                overflow:
+                                                TextOverflow
+                                                    .ellipsis,
                                               ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 30),
-                                          Padding(
-                                            padding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 20,
                                             ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                              CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                Row(
-                                                  mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceAround,
+                                          ],
+                                        ),
+                                      ),
+                                    ); // عنصر الخدمة الخاص بك
+                                  },
+                                  childCount: controller
+                                      .services
+                                      .length,
+                                ),
+                              ),
+                            ),
+
+                            // 3. العنصر الذي تريده في النهاية (الـ Row)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding:
+                                const EdgeInsets.symmetric(
+                                  vertical: 30,
+                                  horizontal: 20,
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.of(
+                                              context,
+                                            ).pop();
+                                          },
+                                          child: Icon(
+                                            Icons.phone_android,
+                                            color: Colors.blue,
+                                            size: 28,
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          width: 12,
+                                        ),
+                                        Text(
+                                          'معلومات التواصل',
+                                          style:
+                                          GoogleFonts.cairo(
+                                            fontSize: 18,
+                                            fontWeight:
+                                            FontWeight
+                                                .bold,
+                                            color:
+                                            Colors.blue,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 30),
+                                    Padding(
+                                      padding:
+                                      const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment
+                                            .start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment
+                                                .spaceAround,
+                                            children: [
+                                              buildContactIconCircular(
+                                                icon:
+                                                Icons.phone,
+                                                backgroundColor:
+                                                const Color(
+                                                  0xFF2196F3,
+                                                ),
+                                                label: 'اتصال',
+                                                onTap: () {
+                                                  final phone =
+                                                      controller
+                                                          .contactUsModel
+                                                          ?.phoneNumber;
+                                                  if (phone !=
+                                                      null &&
+                                                      phone
+                                                          .isNotEmpty) {
+                                                    dialPhoneNumber(
+                                                      phone,
+                                                    );
+                                                  }
+                                                },
+                                                size: 48,
+                                              ),
+
+                                              // ---- واتساب ----
+                                              GestureDetector(
+                                                onTap: () {
+                                                  final wa =
+                                                      controller
+                                                          .contactUsModel
+                                                          ?.whatsAppNumber ??
+                                                          "";
+                                                  if (wa
+                                                      .isNotEmpty) {
+                                                    launchUrl(
+                                                      Uri.parse(
+                                                        'https://wa.me/$wa',
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                child: Column(
                                                   children: [
-                                                    buildContactIconCircular(
-                                                      icon:
-                                                      Icons.phone,
-                                                      backgroundColor:
-                                                      const Color(
-                                                        0xFF2196F3,
-                                                      ),
-                                                      label: 'اتصال',
-                                                      onTap: () {
-                                                        final phone =
-                                                            controller
-                                                                .contactUsModel
-                                                                ?.phoneNumber;
-                                                        if (phone !=
-                                                            null &&
-                                                            phone
-                                                                .isNotEmpty) {
-                                                          dialPhoneNumber(
-                                                            phone,
-                                                          );
-                                                        }
-                                                      },
-                                                      size: 48,
-                                                    ),
-
-                                                    // ---- واتساب ----
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        final wa =
-                                                            controller
-                                                                .contactUsModel
-                                                                ?.whatsAppNumber ??
-                                                                "";
-                                                        if (wa
-                                                            .isNotEmpty) {
-                                                          launchUrl(
-                                                            Uri.parse(
-                                                              'https://wa.me/$wa',
-                                                            ),
-                                                          );
-                                                        }
-                                                      },
-                                                      child: Column(
-                                                        children: [
-                                                          Container(
-                                                            height:
-                                                            48,
-                                                            width: 48,
-                                                            child: Image.asset(
-                                                              'assets/images/whats.png',
-                                                              fit: BoxFit
-                                                                  .contain,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 8,
-                                                          ),
-                                                          Text(
-                                                            'واتساب',
-                                                            style: GoogleFonts.cairo(
-                                                              fontSize:
-                                                              12,
-                                                              fontWeight:
-                                                              FontWeight.w600,
-                                                              color: AppColors
-                                                                  .four,
-                                                            ),
-                                                          ),
-                                                        ],
+                                                    Container(
+                                                      height:
+                                                      48,
+                                                      width: 48,
+                                                      child: Image.asset(
+                                                        'assets/images/whats.png',
+                                                        fit: BoxFit
+                                                            .contain,
                                                       ),
                                                     ),
-
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        final fb =
-                                                            controller
-                                                                .contactUsModel
-                                                                ?.facebook ??
-                                                                "";
-                                                        if (fb
-                                                            .isNotEmpty) {
-                                                          launchUrl(
-                                                            Uri.parse(
-                                                              fb,
-                                                            ),
-                                                          );
-                                                        }
-                                                      },
-                                                      child: Column(
-                                                        children: [
-                                                          Container(
-                                                            height:
-                                                            48,
-                                                            width: 48,
-                                                            child: Image.asset(
-                                                              'assets/images/face.png',
-                                                              fit: BoxFit
-                                                                  .contain,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 8,
-                                                          ),
-                                                          Text(
-                                                            'فيسبوك',
-                                                            style: GoogleFonts.cairo(
-                                                              fontSize:
-                                                              12,
-                                                              fontWeight:
-                                                              FontWeight.w600,
-                                                              color: AppColors
-                                                                  .four,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
+                                                    const SizedBox(
+                                                      height: 8,
                                                     ),
-                                                    // ---- فيسبوك ----
-
-                                                    // ---- إنستغرام ----
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        final ig =
-                                                            controller
-                                                                .contactUsModel
-                                                                ?.instagram ??
-                                                                "";
-                                                        if (ig
-                                                            .isNotEmpty) {
-                                                          launchUrl(
-                                                            Uri.parse(
-                                                              ig,
-                                                            ),
-                                                          );
-                                                        }
-                                                      },
-                                                      child: Column(
-                                                        children: [
-                                                          Container(
-                                                            height:
-                                                            48,
-                                                            width: 48,
-                                                            child: Image.asset(
-                                                              'assets/images/insta.png',
-                                                              fit: BoxFit
-                                                                  .contain,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 8,
-                                                          ),
-                                                          Text(
-                                                            'انستغرام',
-                                                            style: GoogleFonts.cairo(
-                                                              fontSize:
-                                                              12,
-                                                              fontWeight:
-                                                              FontWeight.w600,
-                                                              color: AppColors
-                                                                  .four,
-                                                            ),
-                                                          ),
-                                                        ],
+                                                    Text(
+                                                      'واتساب',
+                                                      style: GoogleFonts.cairo(
+                                                        fontSize:
+                                                        12,
+                                                        fontWeight:
+                                                        FontWeight.w600,
+                                                        color: AppColors
+                                                            .four,
                                                       ),
-                                                    ),
-                                                    buildContactIconCircular(
-                                                      icon: Icons.web,
-                                                      backgroundColor:
-                                                      const Color(
-                                                        0xFF2196F3,
-                                                      ),
-                                                      label: 'الموقع',
-                                                      onTap: () =>
-                                                          launchUrl(
-                                                            Uri.parse(
-                                                              "${controller.contactUsModel?.websiteLink}",
-                                                            ),
-                                                          ),
-                                                      size: 48,
                                                     ),
                                                   ],
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 50),
-                                          Container(
-                                            alignment: Alignment
-                                                .bottomCenter,
-                                            margin:
-                                            const EdgeInsets.only(
-                                              right: 10,
-                                              top: 5,
-                                            ),
-                                            width: MediaQuery.of(
-                                              context,
-                                            ).size.width,
-                                            height:
-                                            MediaQuery.of(
-                                              context,
-                                            ).size.height *
-                                                0.098,
-                                            decoration:
-                                            const BoxDecoration(
-                                              //color: Color.fromARGB(255, 190, 226, 255),
-                                            ),
-                                            child: Center(
-                                              child: Column(
-                                                children: [
-                                                  Text(
-                                                    " ${controller.contactUsModel?.contact == null ? "للتواصل معنا" : controller.contactUsModel?.contact} " +
-                                                        " ${controller.contactUsModel?.companyNumber == null ? "" : controller.contactUsModel?.companyNumber}",
-                                                    style: GoogleFonts.cairo(
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                      FontWeight
-                                                          .bold,
-                                                      color: AppColors
-                                                          .four,
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    height:
-                                                    MediaQuery.of(
-                                                      context,
-                                                    )
-                                                        .size
-                                                        .height *
-                                                        0.01,
-                                                  ),
-                                                  Text(
-                                                    controller
-                                                        .contactUsModel
-                                                        ?.gmail ==
-                                                        null
-                                                        ? ""
-                                                        : controller
-                                                        .contactUsModel!
-                                                        .gmail
-                                                        .toString(),
-                                                    style: GoogleFonts.cairo(
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                      FontWeight
-                                                          .bold,
-                                                      color: AppColors
-                                                          .four,
-                                                    ),
-                                                  ),
-                                                ],
                                               ),
-                                            ),
+
+                                              GestureDetector(
+                                                onTap: () {
+                                                  final fb =
+                                                      controller
+                                                          .contactUsModel
+                                                          ?.facebook ??
+                                                          "";
+                                                  if (fb
+                                                      .isNotEmpty) {
+                                                    launchUrl(
+                                                      Uri.parse(
+                                                        fb,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                child: Column(
+                                                  children: [
+                                                    Container(
+                                                      height:
+                                                      48,
+                                                      width: 48,
+                                                      child: Image.asset(
+                                                        'assets/images/face.png',
+                                                        fit: BoxFit
+                                                            .contain,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 8,
+                                                    ),
+                                                    Text(
+                                                      'فيسبوك',
+                                                      style: GoogleFonts.cairo(
+                                                        fontSize:
+                                                        12,
+                                                        fontWeight:
+                                                        FontWeight.w600,
+                                                        color: AppColors
+                                                            .four,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              // ---- فيسبوك ----
+
+                                              // ---- إنستغرام ----
+                                              GestureDetector(
+                                                onTap: () {
+                                                  final ig =
+                                                      controller
+                                                          .contactUsModel
+                                                          ?.instagram ??
+                                                          "";
+                                                  if (ig
+                                                      .isNotEmpty) {
+                                                    launchUrl(
+                                                      Uri.parse(
+                                                        ig,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                child: Column(
+                                                  children: [
+                                                    Container(
+                                                      height:
+                                                      48,
+                                                      width: 48,
+                                                      child: Image.asset(
+                                                        'assets/images/insta.png',
+                                                        fit: BoxFit
+                                                            .contain,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 8,
+                                                    ),
+                                                    Text(
+                                                      'انستغرام',
+                                                      style: GoogleFonts.cairo(
+                                                        fontSize:
+                                                        12,
+                                                        fontWeight:
+                                                        FontWeight.w600,
+                                                        color: AppColors
+                                                            .four,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              buildContactIconCircular(
+                                                icon: Icons.web,
+                                                backgroundColor:
+                                                const Color(
+                                                  0xFF2196F3,
+                                                ),
+                                                label: 'الموقع',
+                                                onTap: () =>
+                                                    launchUrl(
+                                                      Uri.parse(
+                                                        "${controller.contactUsModel?.websiteLink}",
+                                                      ),
+                                                    ),
+                                                size: 48,
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 20),
                                         ],
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 50),
+                                    Container(
+                                      alignment: Alignment
+                                          .bottomCenter,
+                                      margin:
+                                      const EdgeInsets.only(
+                                        right: 10,
+                                        top: 5,
+                                      ),
+                                      width: MediaQuery.of(
+                                        context,
+                                      ).size.width,
+                                      height:
+                                      MediaQuery.of(
+                                        context,
+                                      ).size.height *
+                                          0.098,
+                                      decoration:
+                                      const BoxDecoration(
+                                        //color: Color.fromARGB(255, 190, 226, 255),
+                                      ),
+                                      child: Center(
+                                        child: Column(
+                                          children: [
+                                            Text(
+                                              " ${controller.contactUsModel?.contact == null ? "للتواصل معنا" : controller.contactUsModel?.contact} " +
+                                                  " ${controller.contactUsModel?.companyNumber == null ? "" : controller.contactUsModel?.companyNumber}",
+                                              style: GoogleFonts.cairo(
+                                                fontSize: 18,
+                                                fontWeight:
+                                                FontWeight
+                                                    .bold,
+                                                color: AppColors
+                                                    .four,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height:
+                                              MediaQuery.of(
+                                                context,
+                                              )
+                                                  .size
+                                                  .height *
+                                                  0.01,
+                                            ),
+                                            Text(
+                                              controller
+                                                  .contactUsModel
+                                                  ?.gmail ==
+                                                  null
+                                                  ? ""
+                                                  : controller
+                                                  .contactUsModel!
+                                                  .gmail
+                                                  .toString(),
+                                              style: GoogleFonts.cairo(
+                                                fontSize: 18,
+                                                fontWeight:
+                                                FontWeight
+                                                    .bold,
+                                                color: AppColors
+                                                    .four,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 60),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      /*  TabBarView(
+                    ],
+                        )))]);})
+                  /*  TabBarView(
                           controller: _tabController,
                           children: [
                             // Tab 1: Services Grid with Contact Section
@@ -2492,15 +2354,11 @@ class _HomeViewBodyState extends State<HomeViewBody>
                             // Contact section
                           ],
                         ),*/
-                      ),
-                    ],
-                  ),
-                );
-        },
-      ),
+               
     );
-  }
+        }
 }
+
 
 // ويدجت التاب المعدلة
 Widget _buildCleanTab(IconData icon, String label) {

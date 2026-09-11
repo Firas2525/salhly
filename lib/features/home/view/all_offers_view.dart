@@ -7,6 +7,7 @@ import 'package:salhly/core/utils/phone_utils.dart';
 import 'package:salhly/features/home/controller/home_controller.dart';
 import 'package:salhly/features/home/model/offer_model.dart';
 import 'package:salhly/features/home/view/offer_detail_view.dart';
+import 'package:salhly/features/home/widgets/home_header.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AllOffersView extends StatefulWidget {
@@ -25,6 +26,7 @@ class AllOffersView extends StatefulWidget {
 
 class _AllOffersViewState extends State<AllOffersView> {
   final HomeController controller = Get.put(HomeController());
+  final GlobalKey<State> _logoKey = GlobalKey<State>();
   bool isLoading = true;
   String _search = '';
 
@@ -75,31 +77,28 @@ class _AllOffersViewState extends State<AllOffersView> {
             top: 0,
             left: 0,
             right: 0,
-            height: MediaQuery.of(context).size.height * 0.35,
+            height: MediaQuery.of(context).size.height * 0.37,
             child: Stack(
               children: [
-                /* Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.blue,
-                            Colors.blue.withOpacity(0.55),
-                            Colors.white,
-                          ],
-                          stops: const [0.0, 0.6, 1.0],
-                        ),
-                      ),
-                    ),*/
+                if (controller.appTopBackground.isNotEmpty)
+                  Positioned.fill(
+                    child: CachedNetworkImage(
+                      imageUrl: controller.appTopBackground,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) =>
+                          Container(color: Colors.blue.withOpacity(0.2)),
+                      errorWidget: (_, __, ___) =>
+                          Container(color: Colors.blue.withOpacity(0.2)),
+                    ),
+                  ),
                 Container(
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.blue,
-                        Colors.blue.withOpacity(0.25),
+                        Color.fromRGBO(33, 150, 243, 0.25),
                         Colors.white,
                       ],
                       stops: const [0.0, 0.6, 1.0],
@@ -109,33 +108,32 @@ class _AllOffersViewState extends State<AllOffersView> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 12.0,
+          if (controller.appBottomBackground.isNotEmpty)
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.37,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: CachedNetworkImage(
+                imageUrl: controller.appBottomBackground,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => const ColoredBox(color: Colors.white),
+                errorWidget: (_, __, ___) =>
+                    const ColoredBox(color: Colors.white),
+              ),
             ),
-            child:
-            Column(children: [
-                SizedBox(height: 40),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Icon(Icons.arrow_back, color: Colors.white, size: 28),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  widget.title,
-                  style: GoogleFonts.cairo(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-              const SizedBox(height: 16),
-              TextField(
+          Column(
+            children: [
+              const SizedBox(height: 15),
+              HeaderHomePage(logoKey: _logoKey),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      TextField(
                 onChanged: (value) {
                   setState(() {
                     _search = value;
@@ -169,8 +167,8 @@ class _AllOffersViewState extends State<AllOffersView> {
                 ),
               ),
               const SizedBox(height: 20),
-            Expanded(
-              child: isLoading
+                      Expanded(
+                        child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : offers.isEmpty
                       ? Center(
@@ -503,8 +501,13 @@ class _AllOffersViewState extends State<AllOffersView> {
                           ),
                         );
                       },
-                    ),
-            ),])
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

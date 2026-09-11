@@ -33,39 +33,83 @@ class _SellExchangeHomeViewState extends State<SellExchangeHomeView> {
           backgroundColor: Colors.white,
           body: Stack(
             children: [
+              const Positioned.fill(
+                child: ColoredBox(color: Colors.white),
+              ),
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
-                height: MediaQuery.of(context).size.height * 0.34,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF4682A9), Color(0xFFEAF4F8)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+                height: MediaQuery.of(context).size.height * 0.37,
+                child: Stack(
+                  children: [
+                    if (controller.appTopBackground.isNotEmpty)
+                      Positioned.fill(
+                        child: CachedNetworkImage(
+                          imageUrl: controller.appTopBackground,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) =>
+                              Container(color: Colors.blue.withOpacity(0.2)),
+                          errorWidget: (_, __, ___) =>
+                              Container(color: Colors.blue.withOpacity(0.2)),
+                        ),
+                      ),
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.blue,
+                            Color.fromRGBO(33, 150, 243, 0.25),
+                            Colors.white,
+                          ],
+                          stops: [0.0, 0.6, 1.0],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-              SafeArea(
-                child: RefreshIndicator(
-                  color: const Color(0xFF4682A9),
-                  onRefresh: () => controller.initializeHome(force: true),
-                  child: ListView(
-                    padding: const EdgeInsets.only(bottom: 110),
-                    children: [
-                      HeaderHomePage(logoKey: _logoKey),
-                      _sectionTitle('إعلاناتنا المميزة', Icons.campaign),
-                      _buildBanners(controller),
-                      _buildSellExchangeActions(),
-                    ],
+              if (controller.appBottomBackground.isNotEmpty)
+                Positioned(
+                  top: MediaQuery.of(context).size.height * 0.37,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: CachedNetworkImage(
+                    imageUrl: controller.appBottomBackground,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) =>
+                        const ColoredBox(color: Colors.white),
+                    errorWidget: (_, __, ___) =>
+                        const ColoredBox(color: Colors.white),
                   ),
                 ),
+              Column(
+                children: [
+                    const SizedBox(height: 15),
+                    HeaderHomePage(logoKey: _logoKey),
+                    _buildSellExchangeCards(controller),
+                    Expanded(
+                      child: RefreshIndicator(
+                        color: const Color(0xFF4682A9),
+                        onRefresh: () => controller.initializeHome(force: true), 
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(bottom: 110),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                            child: _buildUsedProducts(controller),
+                          ),
+                        ),
+                      ),
+                    ),
+
+
+                ],
               ),
-            ],
-          ),
-        );
+       ])  );
       },
     );
   }
@@ -92,40 +136,59 @@ class _SellExchangeHomeViewState extends State<SellExchangeHomeView> {
 
   Widget _buildBanners(HomeController controller) {
     return SizedBox(
-      height: 148,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 180,
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: controller.banners.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final banner = controller.banners[index];
           return GestureDetector(
-            onTap: banner.description?.isNotEmpty == true
-                ? () => Get.to(() => BannerDetailView(banner: banner))
-                : null,
-            child: Container(
-              width: 250,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                image: banner.image.isNotEmpty
-                    ? DecorationImage(
-                        image: CachedNetworkImageProvider(
-                          'https://www.salhly.lareenmedco.com/storage/${banner.image}',
+            onTap: () {
+              final description = banner.description ?? '';
+              if (description.isNotEmpty) {
+                Get.to(() => BannerDetailView(banner: banner));
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+              child: Container(
+                width: 284.44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                  image: banner.image.isNotEmpty
+                      ? DecorationImage(
+                          image: CachedNetworkImageProvider(
+                            'https://www.salhly.lareenmedco.com/storage/${banner.image}',
+                          ),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: banner.image.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              height: 60,
+                              width: 60,
+                              child: Image.asset('assets/images/logo2.png'),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              banner.title,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.cairo(fontSize: 14),
+                            ),
+                          ],
                         ),
-                        fit: BoxFit.cover,
                       )
                     : null,
               ),
-              child: banner.image.isEmpty
-                  ? Center(
-                      child: Text(
-                        banner.title,
-                        style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-                      ),
-                    )
-                  : null,
             ),
           );
         },
@@ -153,45 +216,41 @@ class _SellExchangeHomeViewState extends State<SellExchangeHomeView> {
     );
   }
 
-  Widget _buildSellExchangeActions() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-      child: Column(
-        children: [
-          GetBuilder<HomeController>(
-            builder: (controller) {
-              return Column(
-                children: [
-                  _buildFeatureBanner(
-                    image: controller.buyImage,
-                    fallbackImage: 'assets/images/19.jpg',
-                    title: controller.buyTitle.isNotEmpty
-                        ? controller.buyTitle
-                        : 'بيعنا قطعتك',
-                    description: controller.buyDesc.isNotEmpty
-                        ? controller.buyDesc
-                        : 'نشتري منك بأفضل الأسعار',
-                    icon: Icons.monetization_on,
-                    onTap: () => Get.to(() => const SellPieceView()),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildFeatureBanner(
-                    image: controller.replaceImage,
-                    fallbackImage: 'assets/images/11.jpg',
-                    title: 'استبدل قطعتك',
-                    description: controller.replaceDesc.isNotEmpty
-                        ? controller.replaceDesc
-                        : 'استبدل قطعتك من عنا بقطعة جديدة',
-                    icon: Icons.sync_alt_rounded,
-                    onTap: () => Get.to(() => const ExchangePieceView()),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildUsedProducts(controller),
-                ],
-              );
-            },
-          ),
-        ],
+  Widget _buildSellExchangeCards(HomeController controller) {
+    return SizedBox(
+      height: 180,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        itemCount: 2,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildFeatureBanner(
+              image: controller.buyImage,
+              fallbackImage: 'assets/images/19.jpg',
+              title: controller.buyTitle.isNotEmpty
+                  ? controller.buyTitle
+                  : 'بيعنا قطعتك',
+              description: controller.buyDesc.isNotEmpty
+                  ? controller.buyDesc
+                  : 'نشتري منك بأفضل الأسعار',
+              icon: Icons.monetization_on,
+              onTap: () => Get.to(() => const SellPieceView()),
+            );
+          }
+
+          return _buildFeatureBanner(
+            image: controller.replaceImage,
+            fallbackImage: 'assets/images/11.jpg',
+            title: 'استبدل قطعتك',
+            description: controller.replaceDesc.isNotEmpty
+                ? controller.replaceDesc
+                : 'استبدل قطعتك من عنا بقطعة جديدة',
+            icon: Icons.sync_alt_rounded,
+            onTap: () => Get.to(() => const ExchangePieceView()),
+          );
+        },
       ),
     );
   }
@@ -207,8 +266,8 @@ class _SellExchangeHomeViewState extends State<SellExchangeHomeView> {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        height: 120,
-        width: double.infinity,
+        height: 164,
+        width: 284.44,
         child: Stack(
           children: [
             ClipRRect(
@@ -237,7 +296,7 @@ class _SellExchangeHomeViewState extends State<SellExchangeHomeView> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25),
                 gradient: LinearGradient(
-                  colors: [Colors.blue.withOpacity(0.15), Colors.blue],
+                  colors: [Colors.blue.withOpacity(0.15), Colors.blueGrey],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -293,6 +352,40 @@ class _SellExchangeHomeViewState extends State<SellExchangeHomeView> {
                 ],
               ),
             ),
+            Positioned(
+              bottom: 12,
+              left: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.20),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withOpacity(0.65)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'اكتشف الآن',
+                      style: GoogleFonts.cairo(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white,
+                      size: 15,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -300,6 +393,143 @@ class _SellExchangeHomeViewState extends State<SellExchangeHomeView> {
   }
 
   Widget _buildUsedProducts(HomeController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                 Icon(
+                  Icons.inventory_2_outlined,
+                  color: Colors.blue,
+                  size: 21,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'المنتجات المستعملة',
+                  style: GoogleFonts.cairo(
+                    color: Colors.blue,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.four,
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () => Get.to(
+                () => const AllOffersView(
+                  title: 'كل عروض الاستبدال',
+                  useExchangeOffers: true,
+                ),
+              ),
+              child: Text(
+                'عرض الكل',
+                style: GoogleFonts.cairo(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 0),
+        controller.exchangeOffers.isEmpty
+            ? Center(
+                child: Text(
+                  'لا توجد منتجات حالياً',
+                  style: GoogleFonts.cairo(color: AppColors.four),
+                ),
+              )
+            : GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: 280,
+                ),
+                itemCount: controller.exchangeOffers.length,
+                itemBuilder: (context, index) {
+                  final offer = controller.exchangeOffers[index];
+                  return _UsedProductCard(offer: offer);
+                },
+              ),
+      ],
+    );
+  }
+
+  /*
+  Widget _buildUsedProductsOld(HomeController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'المنتجات المستعملة',
+              style: GoogleFonts.cairo(
+                color: const Color(0xFF4682A9),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+              TextButton(
+                onPressed: () => Get.to(
+                  () => const AllOffersView(
+                    title: 'كل عروض الاستبدال',
+                    useExchangeOffers: true,
+                  ),
+                ),
+                child: Text(
+                  'عرض الكل',
+                  style: GoogleFonts.cairo(
+                    color: const Color(0xFF4682A9),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 2),
+        controller.exchangeOffers.isEmpty
+            ? Center(
+                child: Text(
+                  'لا توجد منتجات حالياً',
+                  style: GoogleFonts.cairo(color: const Color(0xFF4682A9)),
+                ),
+              )
+            : GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: 280,
+                ),
+                itemCount: controller.exchangeOffers.length,
+                itemBuilder: (context, index) {
+                  final offer = controller.exchangeOffers[index];
+                  return _UsedProductCard(offer: offer);
+                },
+              ),
+      ],
+    );
+  }
+
+  Widget _buildUsedProductsOld(HomeController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -354,6 +584,7 @@ class _SellExchangeHomeViewState extends State<SellExchangeHomeView> {
       ],
     );
   }
+  */
 }
 
 class _OfferPreview extends StatelessWidget {
@@ -428,7 +659,7 @@ class _UsedProductCard extends StatelessWidget {
       ),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
+        margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
           color: const Color(0xFFF7F9FC),
           borderRadius: BorderRadius.circular(10),

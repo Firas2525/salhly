@@ -172,7 +172,7 @@ class _HomeNavigationViewState extends State<HomeNavigationView> {
                   width: isSelected ? 18 : 0,
                   height: 2,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD2A23A),
+                    color: const Color(0xFF4682A9),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),

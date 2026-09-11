@@ -181,7 +181,7 @@ class _HomePageViewState extends State<HomePageView> {
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: MediaQuery.of(context).size.height * 0.35,
+                  height: MediaQuery.of(context).size.height * 0.37,
                   child: Stack(
                     children: [
                       /* Container(
@@ -238,7 +238,7 @@ class _HomePageViewState extends State<HomePageView> {
                 ),
                 if (homeCtrl.appBottomBackground.isNotEmpty)
                   Positioned(
-                    top: MediaQuery.of(context).size.height * 0.35,
+                    top: MediaQuery.of(context).size.height * 0.37,
                     left: 0,
                     right: 0,
                     bottom: 0,
