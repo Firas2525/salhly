@@ -1,23 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
 import 'package:salhly/features/auth/view/login.dart';
-import 'package:salhly/features/home/model/privacy_policy_model.dart';
 
 import '../../../app.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../core/utils/app_api.dart';
-import '../../../main.dart';
 import 'package:salhly/models/user_model.dart';
 import '../../../notifiction_services.dart';
-import '../model/about_us_model.dart';
-import '../model/bunner_model.dart';
-import '../model/contact_us_model.dart';
-import '../model/service_model.dart';
 import '../model/maintenance_order_model.dart';
+import '../../home_admin/view/home_admin_view.dart';
 import '../view/home_worker_view.dart';
 
 class HomeWorkerController extends GetxController {
@@ -27,13 +20,6 @@ class HomeWorkerController extends GetxController {
   List<MaintenanceOrderModel> completedOrders = [];
 
   UserModel? user;
-
-  Future<void> _forceLogout() async {
-    await App.prefs.clear();
-    user = null;
-    update();
-    Get.offAll(() => Login());
-  }
 
   dynamic _tryDecodeBody(String body) {
     try {
@@ -64,7 +50,7 @@ class HomeWorkerController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeWorkerController.getAboutUs: ${response.statusCode}');
         return;
       }
 
@@ -106,7 +92,7 @@ class HomeWorkerController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeWorkerController.getPendingOrders: ${response.statusCode}');
         return;
       }
 
@@ -149,7 +135,7 @@ class HomeWorkerController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeWorkerController.getApprovedOrders: ${response.statusCode}');
         return;
       }
 
@@ -192,7 +178,7 @@ class HomeWorkerController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeWorkerController.getCompletedOrders: ${response.statusCode}');
         return;
       }
 
@@ -375,8 +361,12 @@ class HomeWorkerController extends GetxController {
       if (response.statusCode == 200 || response.statusCode == 201) {
         showAppSnackbar('نجاح', 'تم إكمال الطلب بنجاح');
         await refreshAllOrders();
-        // go back to worker home
-        Get.offAll(() => HomeWorkerView());
+        // go back to admin or worker home
+        if (App.prefs.getString('type') == '1') {
+          Get.offAll(() => const HomeAdminView());
+        } else {
+          Get.offAll(() => const HomeWorkerView());
+        }
       } else if (response.statusCode == 403 || response.statusCode == 401) {
         await App.prefs.clear();
         user = null;

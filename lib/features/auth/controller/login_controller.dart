@@ -14,6 +14,7 @@ import '../../../notifiction_services.dart';
 import '../../home/view/home_navigation_view.dart';
 import '../../home/view/new_home_page_view.dart';
 import '../../home/controller/home_controller.dart';
+import '../../home_admin/view/home_admin_view.dart';
 import '../../home_worker/view/home_worker_view.dart';
 
 class AuthController extends GetxController {
@@ -97,20 +98,21 @@ class AuthController extends GetxController {
         await App.prefs.setBool('just_logged_in', true);
         NotificationServices().getDeviceToken();
 
-        // Refresh user data before navigating
-        try {
-          final homeController = Get.find<HomeController>();
-          await homeController.getUser();
-        } catch (e) {
-          print('Could not initialize HomeController: $e');
-          // Create new instance if not found
-          final homeController = Get.put(HomeController());
-          await homeController.getUser();
-        }
-
-        if (data['data']['role_id'].toString() == "3") {
+        final roleId = data['data']['role_id'].toString();
+        if (roleId == "1") {
+          Get.offAll(() => const HomeAdminView());
+        } else if (roleId == "3") {
           Get.offAll(() => HomeWorkerView());
         } else {
+          // Refresh user data before navigating for regular users
+          try {
+            final homeController = Get.isRegistered<HomeController>()
+                ? Get.find<HomeController>()
+                : Get.put(HomeController());
+            await homeController.getUser();
+          } catch (e) {
+            print('Could not initialize HomeController: $e');
+          }
           Get.offAll(() => const HomeNavigationView());
         }
       } else {

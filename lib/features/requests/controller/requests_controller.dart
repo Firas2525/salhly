@@ -32,6 +32,10 @@ class RequestsController extends GetxController {
       request.headers.addAll(headers);
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
+      print("========================================");
+      print("=== Requests Response (Status: ${response.statusCode}) ===");
+      print(responseBody);
+      print("========================================");
 
       if (response.statusCode == 403 || response.statusCode == 401) {
         await App.prefs.clear();
@@ -44,7 +48,6 @@ class RequestsController extends GetxController {
           response.statusCode == 201 ||
           response.statusCode == 210) {
         final List<dynamic> dataList = data?['data'] ?? [];
-        print(dataList);
         requests = dataList.map((e) => RequestModel.fromJson(e)).toList();
       } else {
         showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ");

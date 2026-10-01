@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:salhly/configs/app_colors.dart';
 import 'package:salhly/core/utils/assets_manager.dart';
 import 'package:salhly/features/home/controller/home_controller.dart';
 import 'package:salhly/features/home/view/about_contact_view.dart';
@@ -118,3 +116,4 @@ class HeaderHomePage extends StatelessWidget {
     );
   }
 }
+

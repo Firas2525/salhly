@@ -1,127 +1,229 @@
+import 'dart:math' as math;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:salhly/configs/app_colors.dart';
+import 'package:shimmer/shimmer.dart';
 
+import '../../../configs/app_colors.dart';
 import '../../service/view/service_view.dart';
 import '../model/service_model.dart';
 
-class GoldenServiceCard extends StatelessWidget {
-  const GoldenServiceCard({super.key, required this.service});
+class GoldenServiceCard extends StatefulWidget {
+  const GoldenServiceCard({
+    super.key,
+    required this.service,
+    this.index = 0,
+  });
 
   final ServicesModel service;
+  final int index;
+
+  @override
+  State<GoldenServiceCard> createState() => _GoldenServiceCardState();
+}
+
+class _GoldenServiceCardState extends State<GoldenServiceCard> {
+  bool _isPressed = false;
+
+  // Selected Golden Tool Images
+  static const List<String> _selectedGoldenImages = [
+    '111.jpg',
+    '113.jpg',
+    '112.jpg',
+    '114.jpg',
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final cardWidth = (MediaQuery.of(context).size.width - 64) / 3;
+    const double cardWidth = 200.0;
+    const double cardHeight = 104.0;
 
-    return GestureDetector(
-      onTap: () => Get.to(
-        () => ServiceView(),
-        arguments: {'serviceId': service.id},
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: cardWidth,
-            height: cardWidth,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.four.withOpacity(0.12),
-                width: 1,
+    final String bgImage =
+        'assets/images/114.jpg';
+
+    return AnimatedScale(
+      scale: _isPressed ? 0.96 : 1.0,
+      duration: const Duration(milliseconds: 130),
+      curve: Curves.easeOutCubic,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          Get.to(
+            () => ServiceView(),
+            arguments: {'serviceId': widget.service.id},
+          );
+        },
+        child: Container(
+          width: cardWidth,
+          height: cardHeight,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFFFDE68A).withValues(alpha: 0.6),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0284C7).withValues(alpha: 0.18),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl:
-                        'https://www.salhly.lareenmedco.com/storage/${service.image}',
-                    height: 50,
-                    fit: BoxFit.contain,
-                    placeholder: (_, __) => _imageFallback(),
-                    errorWidget: (_, __, ___) => _imageFallback(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    service.title,
-                    style: GoogleFonts.cairo(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF4682A9),
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          Positioned(
-            top: -5,
-            left: -5,
-            child: Transform.rotate(
-              angle: -0.12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                // 1. Golden Tools Image covering the card
+                Positioned.fill(
+                  child: Image.asset(
+                    bgImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient (
-                    colors: [
-                      Color(0xFFF4D06F),
-                      Color(0xFFC58A16),
-                      Color(0xFFE5B94D),
+
+                // 2. Home Header Blue Gradient Overlay
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                        colors: [
+                          const Color(0xFF0284C7).withValues(alpha: 0.88),
+                          const Color(0xFF0369A1).withValues(alpha: 0.72),
+                          const Color(0xFFFDE68A).withValues(alpha: 0.55),
+                        ],
+                        stops: const [0.0, 0.50, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 3. Card Content
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Service Image Container
+                      Container(
+                        width: 62,
+                        height: 62,
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: const Color(0xFFFEF08A),
+                            width: 1.4,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              'https://www.salhly.lareenmedco.com/storage/${widget.service.image}',
+                          fit: BoxFit.contain,
+                          placeholder: (_, __) => Shimmer.fromColors(
+                            baseColor: Colors.grey.shade200,
+                            highlightColor: Colors.grey.shade100,
+                            child: Container(color: Colors.white),
+                          ),
+                          errorWidget: (_, __, ___) => Icon(
+                            Icons.home_repair_service_rounded,
+                            color: AppColors.four,
+                            size: 26,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 14),
+
+                      // Title and Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              widget.service.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.cairo(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                height: 1.2,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withValues(alpha: 0.4),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 5),
+
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.verified_rounded,
+                                  size: 12,
+                                  color: Color(0xFF7DD3FC),
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    'أولوية فورية',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFFE0F2FE),
+                                      height: 1.1,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(6),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFC58A16).withOpacity(0.32),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
-                child: const Text(
-                  'خدمة ذهبية',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+
+              ],
             ),
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _imageFallback() {
-    return Container(
-      color: Colors.grey.shade200,
-      height: 60,
-      child: const Icon(Icons.error_outline, color: Colors.grey),
     );
   }
 }

@@ -34,6 +34,7 @@ class HomeController extends GetxController {
   TextEditingController myEmail = TextEditingController();
   AboutUsModel? aboutUsModel;
   ContactUsModel? contactUsModel;
+
   // current logged user
   UserModel? user;
   PrivacyPolicyModel? privacyPolicyModel;
@@ -138,9 +139,7 @@ class HomeController extends GetxController {
     update();
     try {
       String? token = App.prefs.getString('token');
-      var headers = {
-        'Authorization': 'Bearer $token',
-      };
+      var headers = {'Authorization': 'Bearer $token'};
       var request = http.Request(
         'POST',
         Uri.parse('${AppApi.baseUrl}/user/delete'),
@@ -195,14 +194,15 @@ class HomeController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print(
+          'HomeController.getAds forbidden/unauthorized: ${response.statusCode}',
+        );
         return;
       }
 
       var data = _tryDecodeBody(responseBody);
       if (_isHtmlResponse(responseBody) || data == null) {
-        print('HomeController.getAds received HTML or invalid JSON, forcing logout');
-        await _forceLogout();
+        print('HomeController.getAds received HTML or invalid JSON');
         return;
       }
 
@@ -248,14 +248,15 @@ class HomeController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print(
+          'HomeController.getServices forbidden/unauthorized: ${response.statusCode}',
+        );
         return;
       }
 
       var data = _tryDecodeBody(responseBody);
       if (_isHtmlResponse(responseBody) || data == null) {
-        print('HomeController.getServices received HTML or invalid JSON, forcing logout');
-        await _forceLogout();
+        print('HomeController.getServices received HTML or invalid JSON');
         return;
       }
       print(data);
@@ -268,11 +269,11 @@ class HomeController extends GetxController {
             .toList();
         print(data);
       } else {
-       // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
+        // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
-     /* showAppSnackbar(
+      /* showAppSnackbar(
         "خطأ",
         "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
         isError: true,
@@ -294,7 +295,7 @@ class HomeController extends GetxController {
       );
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeController.getGoldenServices: ${response.statusCode}');
         return;
       }
 
@@ -330,14 +331,13 @@ class HomeController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeController.getContactUs: ${response.statusCode}');
         return;
       }
 
       var data = _tryDecodeBody(responseBody);
       if (_isHtmlResponse(responseBody) || data == null) {
-        print('HomeController.getContactUs received HTML or invalid JSON, forcing logout');
-        await _forceLogout();
+        print('HomeController.getContactUs received HTML or invalid JSON');
         return;
       }
       print(data ?? responseBody);
@@ -348,11 +348,11 @@ class HomeController extends GetxController {
         contactUsModel = ContactUsModel.fromJson(data["data"]);
         print("ContactUs Loaded Successfully");
       } else {
-       // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
+        // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
-     /* showAppSnackbar(
+      /* showAppSnackbar(
         "خطأ",
         "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
         isError: true,
@@ -362,10 +362,7 @@ class HomeController extends GetxController {
 
   getOffers() async {
     try {
-      var headers = {
-        'Accept': 'application/json',
-        'Accept-Language': 'en',
-      };
+      var headers = {'Accept': 'application/json', 'Accept-Language': 'en'};
       var uri = Uri.parse("https://www.salhly.lareenmedco.com/api/offers/get");
 
       var request = http.Request('GET', uri);
@@ -374,7 +371,7 @@ class HomeController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeController.getOffers: ${response.statusCode}');
         return;
       }
 
@@ -398,11 +395,10 @@ class HomeController extends GetxController {
 
   getExchangeOffers() async {
     try {
-      var headers = {
-        'Accept': 'application/json',
-        'Accept-Language': 'en',
-      };
-      var uri = Uri.parse("https://www.salhly.lareenmedco.com/api/offers/get_exchange");
+      var headers = {'Accept': 'application/json', 'Accept-Language': 'en'};
+      var uri = Uri.parse(
+        "https://www.salhly.lareenmedco.com/api/offers/get_exchange",
+      );
 
       var request = http.Request('GET', uri);
       request.headers.addAll(headers);
@@ -410,7 +406,7 @@ class HomeController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeController.getExchangeOffers: ${response.statusCode}');
         return;
       }
 
@@ -435,29 +431,27 @@ class HomeController extends GetxController {
   getAppAppearance() async {
     try {
       String? token = App.prefs.getString('token');
-      var headers = {
-        'Accept': 'application/json',
-        'Accept-Language': 'en',
-      };
+      var headers = {'Accept': 'application/json', 'Accept-Language': 'en'};
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
 
-      var uri = Uri.parse('https://www.salhly.lareenmedco.com/api/app-appearance/show');
+      var uri = Uri.parse(
+        'https://www.salhly.lareenmedco.com/api/app-appearance/show',
+      );
       var request = http.Request('GET', uri);
       request.headers.addAll(headers);
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeController.getAppAppearance: ${response.statusCode}');
         return;
       }
 
       var data = _tryDecodeBody(responseBody);
       if (_isHtmlResponse(responseBody) || data == null) {
-        print('HomeController.getAppAppearance received HTML or invalid JSON, forcing logout');
-        await _forceLogout();
+        print('HomeController.getAppAppearance received HTML or invalid JSON');
         return;
       }
 
@@ -489,7 +483,9 @@ class HomeController extends GetxController {
 
         update();
       } else {
-        print('Error loading app appearance: ${response.statusCode} ${data?['message'] ?? ''}');
+        print(
+          'Error loading app appearance: ${response.statusCode} ${data?['message'] ?? ''}',
+        );
       }
     } catch (e) {
       print('Exception loading app appearance: $e');
@@ -514,14 +510,13 @@ class HomeController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeController.getAboutUs: ${response.statusCode}');
         return;
       }
 
       var data = _tryDecodeBody(responseBody);
       if (_isHtmlResponse(responseBody) || data == null) {
-        print('HomeController.getAboutUs received HTML or invalid JSON, forcing logout');
-        await _forceLogout();
+        print('HomeController.getAboutUs received HTML or invalid JSON');
         return;
       }
       print(data ?? responseBody);
@@ -532,11 +527,11 @@ class HomeController extends GetxController {
         aboutUsModel = AboutUsModel.fromJson(data["data"]);
         print("AboutUs Loaded Successfully");
       } else {
-       // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
+        // showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
-     /* showAppSnackbar(
+      /* showAppSnackbar(
         "خطأ",
         "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
         isError: true,
@@ -560,23 +555,21 @@ class HomeController extends GetxController {
       request.headers.addAll(headers);
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
-     print(88888);
-     print("${AppApi.baseUrl}/user/find");
-     print(response.statusCode);
-     print(responseBody);
-     print(88888);
-
+      print(88888);
+      print("${AppApi.baseUrl}/user/find");
+      print(response.statusCode);
+      print(responseBody);
+      print(88888);
 
       var data = _tryDecodeBody(responseBody);
       print(response.statusCode);
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeController.getUser: ${response.statusCode}');
         return;
       }
 
       if (_isHtmlResponse(responseBody) || data == null) {
-        print('Received HTML or invalid JSON from user/find, forcing logout');
-        await _forceLogout();
+        print('Received HTML or invalid JSON from user/find');
         return;
       }
 
@@ -584,7 +577,6 @@ class HomeController extends GetxController {
           response.statusCode == 201 ||
           response.statusCode == 210 ||
           response.statusCode == 220) {
-
         if (data is Map && data['data'] != null) {
           try {
             user = UserModel.fromJson(Map<String, dynamic>.from(data['data']));
@@ -593,11 +585,11 @@ class HomeController extends GetxController {
           }
         }
       } else {
-     //   showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
+        //   showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
-     /* showAppSnackbar(
+      /* showAppSnackbar(
         "خطأ",
         "حدث خطأ أثناء الاتصال. حاول لاحقًا.",
         isError: true,
@@ -605,9 +597,16 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<NotificationsResponse?> getNotifications({int page = 1, int perPage = 10, bool reset = true}) async {
+  Future<NotificationsResponse?> getNotifications({
+    int page = 1,
+    int perPage = 10,
+    bool reset = true,
+  }) async {
     try {
-      final response = await NotificationsService().getNotifications(page: page, perPage: perPage);
+      final response = await NotificationsService().getNotifications(
+        page: page,
+        perPage: perPage,
+      );
       if (response != null) {
         if (reset) {
           notifications = response.data;
@@ -645,14 +644,13 @@ class HomeController extends GetxController {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 403 || response.statusCode == 401) {
-        await _forceLogout();
+        print('HomeController.getPrivacyPolicy: ${response.statusCode}');
         return;
       }
 
       var data = _tryDecodeBody(responseBody);
       if (_isHtmlResponse(responseBody) || data == null) {
-        print('HomeController.getPrivacyPolicy received HTML or invalid JSON, forcing logout');
-        await _forceLogout();
+        print('HomeController.getPrivacyPolicy received HTML or invalid JSON');
         return;
       }
       print(data ?? responseBody);
@@ -662,7 +660,7 @@ class HomeController extends GetxController {
           response.statusCode == 220) {
         privacyPolicyModel = PrivacyPolicyModel.fromJson(data["data"]);
       } else {
-      //  showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
+        //  showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ", isError: true);
       }
     } catch (e) {
       print(e);
@@ -697,7 +695,10 @@ class HomeController extends GetxController {
     update();
 
     try {
-      // Call all APIs in parallel
+      final String? userType = App.prefs.getString('type');
+      final bool isAdminOrWorker = userType == '1' || userType == '3';
+
+      // Call APIs in parallel
       await Future.wait<void>([
         NotificationServices().getDeviceToken(),
         getAds(),
@@ -708,8 +709,8 @@ class HomeController extends GetxController {
         getOffers(),
         getExchangeOffers(),
         getContactUs(),
-        getUser(),
-        getNotifications(),
+        if (!isAdminOrWorker) getUser(),
+        if (!isAdminOrWorker) getNotifications(),
       ]);
       _hasInitialized = true;
     } catch (e) {
@@ -720,5 +721,99 @@ class HomeController extends GetxController {
       update();
     }
   }
-}
 
+  bool isReordering = false;
+
+  Future<bool> reorderServices(List<int> serviceIds) async {
+    isReordering = true;
+    update();
+    try {
+      String? token = App.prefs.getString('token');
+      var headers = {
+        'Accept': 'application/json',
+        'Accept-Language': 'ar',
+        'Content-Type': 'application/json',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      };
+      var uri = Uri.parse('${AppApi.baseUrl}/service/reorder');
+
+      // Master list of all database service IDs required by the backend
+      const List<int> masterServiceIds = [
+        2, 1, 3, 8, 10, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 35, 37, 39, 44, 46, 47, 48, 49
+      ];
+
+      // 1. Start with the ordered regular IDs chosen by the admin
+      final List<int> fullIdsList = List<int>.from(serviceIds);
+
+      // 2. Append any dynamic services loaded
+      for (final s in services) {
+        if (!fullIdsList.contains(s.id)) {
+          fullIdsList.add(s.id);
+        }
+      }
+      for (final s in goldenServices) {
+        if (!fullIdsList.contains(s.id)) {
+          fullIdsList.add(s.id);
+        }
+      }
+
+      // 3. Append any remaining IDs from the master list (such as 2, 37, 49)
+      for (final id in masterServiceIds) {
+        if (!fullIdsList.contains(id)) {
+          fullIdsList.add(id);
+        }
+      }
+
+      final requestBody = jsonEncode({'service_ids': fullIdsList});
+
+      print('========== [REORDER SERVICES API CALL] ==========');
+      print('🚀 URL: $uri');
+      print('📋 Method: POST');
+      print('🔑 Headers: $headers');
+      print('📦 Request Body: $requestBody');
+      print('📊 Total IDs: ${fullIdsList.length}');
+      print('================================================');
+
+      var response = await http.post(uri, headers: headers, body: requestBody);
+
+      var data = _tryDecodeBody(response.body);
+      print('========== [REORDER SERVICES API RESPONSE] ==========');
+      print('📥 Status Code: ${response.statusCode}');
+      print('📄 Response Body: ${response.body}');
+      print('====================================================');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        String successMsg = 'تم حفظ ترتيب الخدمات بنجاح.';
+        if (data is Map) {
+          if (data['data'] is String) {
+            successMsg = data['data'];
+          } else if (data['message'] is String) {
+            successMsg = data['message'];
+          }
+        }
+        showAppSnackbar('نجاح', successMsg);
+        await getServices();
+        await getGoldenServices();
+        isReordering = false;
+        update();
+        return true;
+      } else {
+        String errorMsg = 'فشل تحديث الترتيب';
+        if (data is Map) {
+          if (data['message'] is String) {
+            errorMsg = data['message'];
+          } else if (data['data'] is String) {
+            errorMsg = data['data'];
+          }
+        }
+        showAppSnackbar('خطأ', errorMsg, isError: true);
+      }
+    } catch (e) {
+      print('❌ Exception reordering services: $e');
+      showAppSnackbar('خطأ', 'حدث خطأ أثناء الاتصال', isError: true);
+    }
+    isReordering = false;
+    update();
+    return false;
+  }
+}

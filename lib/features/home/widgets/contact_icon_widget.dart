@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:salhly/configs/app_colors.dart';
@@ -41,10 +42,10 @@ Widget buildContactIconCircular({
               ? fullImage
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(size * 0.3),
-                        child: Image.network(
-                          imageUrl,
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
+                          errorWidget: (context, error, stackTrace) {
                             return Icon(
                               Icons.link,
                               color: Colors.white,
@@ -55,10 +56,10 @@ Widget buildContactIconCircular({
                       )
                     : Padding(
                         padding: EdgeInsets.all(size * 0.15),
-                        child: Image.network(
-                          imageUrl,
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
+                          errorWidget: (context, error, stackTrace) {
                             return Icon(
                               Icons.link,
                               color: Colors.white,

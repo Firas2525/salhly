@@ -14,6 +14,7 @@ import '../../../core/utils/app_api.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../auth/view/login.dart';
 import '../model/service_model.dart';
+import '../widgets/maintenance_success_dialog.dart';
 
 class RequestServiceController extends GetxController {
   // Loading state
@@ -364,9 +365,8 @@ class RequestServiceController extends GetxController {
       }
 
       final respJson = jsonDecode(respStr);
-       print(respJson);
+      print(respJson);
       if (streamed.statusCode == 200 || streamed.statusCode == 201) {
-        showAppSnackbar('نجاح', respJson['message'] ?? 'تم إرسال الطلب بنجاح');
         // Clear form
         fullNameController.clear();
         phoneController.clear();
@@ -374,6 +374,16 @@ class RequestServiceController extends GetxController {
         descriptionController.clear();
         imageFiles.clear();
         await deleteAudio();
+
+        isLoading = false;
+        update();
+
+        // Show creative animated guarantee dialog
+        Get.dialog(
+          const MaintenanceSuccessDialog(),
+          barrierDismissible: false,
+        );
+        return;
       } else {
         showAppSnackbar('خطأ', respJson['message'] ?? 'حدث خطأ أثناء الإرسال');
       }

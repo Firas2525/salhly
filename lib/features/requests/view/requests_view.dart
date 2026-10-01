@@ -1,10 +1,15 @@
+import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:salhly/configs/app_colors.dart';
+import 'package:salhly/core/utils/assets_manager.dart';
+import 'package:salhly/features/home/controller/home_controller.dart';
+import 'package:salhly/features/home/view/about_contact_view.dart';
+import 'package:salhly/features/home/widgets/animated_logo.dart';
+import 'package:salhly/features/notifications/view/notifications_page.dart';
 import 'package:salhly/features/requests/controller/requests_controller.dart';
 import 'package:salhly/features/requests/view/request_detail_view_new.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -75,7 +80,7 @@ class _MediaPreviewState extends State<MediaPreview> {
               child: Stack(
                 children: [
                   PhotoView(
-                    imageProvider: NetworkImage(widget.file.fullUrl),
+                    imageProvider: CachedNetworkImageProvider(widget.file.fullUrl),
                     minScale: PhotoViewComputedScale.contained,
                     maxScale: PhotoViewComputedScale.covered * 3,
                   ),
@@ -94,16 +99,22 @@ class _MediaPreviewState extends State<MediaPreview> {
         },
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            widget.file.fullUrl,
+          child: CachedNetworkImage(
+            imageUrl: widget.file.fullUrl,
             width: 120,
             height: 80,
             fit: BoxFit.cover,
-            errorBuilder: (c, e, s) => Container(
+            placeholder: (c, url) => Container(
               width: 120,
               height: 80,
               color: Colors.grey.shade200,
-              child: Icon(Icons.broken_image, color: Colors.grey),
+              child: const Center(child: CupertinoActivityIndicator()),
+            ),
+            errorWidget: (c, e, s) => Container(
+              width: 120,
+              height: 80,
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image, color: Colors.grey),
             ),
           ),
         ),
@@ -143,107 +154,224 @@ class _RequestsViewState extends State<RequestsView> {
   final controller = Get.put(RequestsController());
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final canPop = Navigator.of(context).canPop();
+
     return Scaffold(
-      body: Stack(children: [
-      Positioned.fill(child: Container(color: Colors.white)),
-      Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        height: MediaQuery.of(context).size.height * 0.35,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.blue,
-                Colors.blue.withOpacity(0.55),
-                Colors.white,
-              ],
-              stops: const [0.0, 0.6, 1.0],
-            ),
-          ),
-        ),
-      ),
-      GetBuilder<RequestsController>(
-        builder: (controller) {
-          if (controller.isLoading) {
-            return Center(
-              child: CircularProgressIndicator(color: AppColors.four),
-            );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
-            child: Column(
-              children: [
-                // Search / header
-
-                SizedBox(height: 40),
-                Row(
-                  children: [
-                    GestureDetector(
-                        onTap: (){
-                          Navigator.of(context).pop();
-                        },
-                        child: Icon(Icons.arrow_back, color: Colors.white, size: 28)),
-                    const SizedBox(width: 12),
-                    Text(
-                      'الخدمات المطلوبة',
-                      style: GoogleFonts.cairo(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: GetBuilder<RequestsController>(
+        builder: (reqCtrl) {
+          return RefreshIndicator(
+            color: Colors.blue,
+            backgroundColor: Colors.white,
+            edgeOffset: 120,
+            onRefresh: () => reqCtrl.getRequests(),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  floating: false,
+                  elevation: 4,
+                  shadowColor: Colors.blue.withOpacity(0.25),
+                  backgroundColor: Colors.blue,
+                  surfaceTintColor: Colors.transparent,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(24),
+                    ),
+                  ),
+                  centerTitle: true,
+                  title: Text(
+                    'الطلبات',
+                    style: GoogleFonts.cairo(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 17,
+                    ),
+                  ),
+                  leadingWidth: 70,
+                  leading: canPop
+                      ? Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: GestureDetector(
+                            onTap: () => Get.to(() => const AboutContactView()),
+                            child: Center(
+                              child: SizedBox(
+                                height: 38,
+                                width: 38,
+                                child: AnimatedLogo(assetPath: ImgAsset.whiteLogo),
+                              ),
+                            ),
+                          ),
+                        ),
+                  actions: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Material(
+                            color: Colors.white.withOpacity(0.18),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(14),
+                              onTap: () => Get.to(() => const NotificationsPage()),
+                              child: Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: GetBuilder<HomeController>(
+                                  init: Get.isRegistered<HomeController>()
+                                      ? Get.find<HomeController>()
+                                      : Get.put(HomeController()),
+                                  builder: (homeCtrl) {
+                                    return Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.notifications_rounded,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                                        if (homeCtrl.unreadNotificationsCount > 0)
+                                          Positioned(
+                                            top: 6,
+                                            right: 6,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFEF4444),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              constraints: const BoxConstraints(
+                                                minWidth: 16,
+                                                minHeight: 16,
+                                              ),
+                                              child: Text(
+                                                homeCtrl.unreadNotificationsCount > 99
+                                                    ? '99+'
+                                                    : '${homeCtrl.unreadNotificationsCount}',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
-                Expanded(
-                  child: controller.requests.isEmpty
-                      ? Center(
-                          child: Text(
+                if (reqCtrl.isLoading)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.blue),
+                    ),
+                  )
+                else if (reqCtrl.requests.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 64,
+                            color: Colors.blue.withOpacity(0.35),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
                             'لا توجد طلبات حالياً',
                             style: GoogleFonts.cairo(
                               fontSize: 16,
-                              color: AppColors.four,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blueGrey,
                             ),
                           ),
-                        )
-                      : ListView.separated(
-                          separatorBuilder: (_, __) => SizedBox(height: 14),
-                          itemCount: controller.requests.length,
-                          itemBuilder: (context, index) {
-                            final r = controller.requests[index];
-                            return InkWell(
-                              onTap: () =>
-                                  Get.to(() => RequestDetailView(request: r)),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final r = reqCtrl.requests[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(18),
-                              child: Container(
-                                padding: const EdgeInsets.all(0),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(18),
-                                  gradient: LinearGradient(
-                                    colors: [Colors.white, Colors.white],
-                                  ),
-                                  border: Border.all(
-                                    color: Colors.grey.withOpacity(0.06),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 18,
-                                      offset: Offset(0, 8),
-                                    ),
-                                  ],
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF1E293B).withOpacity(0.04),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
                                 ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(18),
+                              child: InkWell(
+                                onTap: () => Get.to(() => RequestDetailView(request: r)),
+                                borderRadius: BorderRadius.circular(18),
                                 child: Stack(
                                   children: [
                                     // Status badge (top right)
@@ -251,7 +379,7 @@ class _RequestsViewState extends State<RequestsView> {
                                       top: 0,
                                       right: 0,
                                       child: Container(
-                                        padding: EdgeInsets.symmetric(
+                                        padding: const EdgeInsets.symmetric(
                                           horizontal: 14,
                                           vertical: 6,
                                         ),
@@ -263,11 +391,9 @@ class _RequestsViewState extends State<RequestsView> {
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.12,
-                                              ),
+                                              color: Colors.black.withOpacity(0.12),
                                               blurRadius: 8,
-                                              offset: Offset(0, 4),
+                                              offset: const Offset(0, 4),
                                             ),
                                           ],
                                         ),
@@ -278,7 +404,7 @@ class _RequestsViewState extends State<RequestsView> {
                                               color: Colors.white,
                                               size: 16,
                                             ),
-                                            SizedBox(width: 6),
+                                            const SizedBox(width: 6),
                                             Text(
                                               _getStatusText(r.status),
                                               style: GoogleFonts.cairo(
@@ -291,131 +417,110 @@ class _RequestsViewState extends State<RequestsView> {
                                         ),
                                       ),
                                     ),
-                                    // Main content (no media)
+                                    // Main content
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 16,
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          // Main info
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                SizedBox(height: 28),
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.person,
-                                                      color: AppColors.four,
-                                                      size: 18,
-                                                    ),
-                                                    SizedBox(width: 6),
-                                                    Expanded(
-                                                      child: Text(
-                                                        r.fullName,
-                                                        style:
-                                                            GoogleFonts.cairo(
-                                                              fontSize: 16,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              color: Colors
-                                                                  .black87,
-                                                            ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                    SizedBox(width: 8),
-                                                    Icon(
-                                                      Icons.calendar_today,
-                                                      color: Colors.grey,
-                                                      size: 15,
-                                                    ),
-                                                    SizedBox(width: 3),
-                                                    Text(
-                                                      r.createdAt != null
-                                                          ? r.createdAt!
-                                                                .toLocal()
-                                                                .toString()
-                                                                .split(' ')[0]
-                                                          : '',
-                                                      style: GoogleFonts.cairo(
-                                                        fontSize: 12,
-                                                        color: Colors.black45,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                SizedBox(height: 7),
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.home_repair_service,
-                                                      color: AppColors.four,
-                                                      size: 16,
-                                                    ),
-                                                    SizedBox(width: 5),
-                                                    Expanded(
-                                                      child: Text(
-                                                        '${r.service?.name ?? ''} • ${r.subService?.name ?? ''}',
-                                                        style:
-                                                            GoogleFonts.cairo(
-                                                              fontSize: 13,
-                                                              color: Colors
-                                                                  .black54,
-                                                            ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                SizedBox(height: 8),
-                                                Text(
-                                                  r.description,
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                          const SizedBox(height: 24),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.person,
+                                                color: AppColors.four,
+                                                size: 18,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  r.fullName,
                                                   style: GoogleFonts.cairo(
-                                                    fontSize: 13,
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
                                                     color: Colors.black87,
                                                   ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
-                                                SizedBox(height: 10),
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.phone,
-                                                      size: 15,
-                                                      color: AppColors.four,
-                                                    ),
-                                                    SizedBox(width: 5),
-                                                    Text(
-                                                      r.phoneNumber,
-                                                      style: GoogleFonts.cairo(
-                                                        fontSize: 13,
-                                                      ),
-                                                    ),
-                                                    Spacer(),
-                                                    Icon(
-                                                      Icons.arrow_forward_ios,
-                                                      size: 16,
-                                                      color: AppColors.four
-                                                          .withOpacity(0.7),
-                                                    ),
-                                                  ],
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Icon(
+                                                Icons.calendar_today,
+                                                color: Colors.grey,
+                                                size: 14,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                r.createdAt != null
+                                                    ? r.createdAt!
+                                                        .toLocal()
+                                                        .toString()
+                                                        .split(' ')[0]
+                                                    : '',
+                                                style: GoogleFonts.cairo(
+                                                  fontSize: 12,
+                                                  color: Colors.black45,
                                                 ),
-                                              ],
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.home_repair_service,
+                                                color: AppColors.four,
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  '${r.service?.name ?? ''} • ${r.subService?.name ?? ''}',
+                                                  style: GoogleFonts.cairo(
+                                                    fontSize: 13,
+                                                    color: Colors.black54,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (r.description.isNotEmpty) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              r.description,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.cairo(
+                                                fontSize: 13,
+                                                color: Colors.black87,
+                                              ),
                                             ),
+                                          ],
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.phone,
+                                                size: 15,
+                                                color: AppColors.four,
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                r.phoneNumber,
+                                                style: GoogleFonts.cairo(
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              Icon(
+                                                Icons.arrow_forward_ios,
+                                                size: 15,
+                                                color: AppColors.four.withOpacity(0.7),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
@@ -423,16 +528,19 @@ class _RequestsViewState extends State<RequestsView> {
                                   ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                ),
+                            ),
+                          );
+                        },
+                        childCount: reqCtrl.requests.length,
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
         },
       ),
-    ]));
+    );
   }
 }
 

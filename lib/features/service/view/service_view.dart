@@ -204,20 +204,37 @@ class _ServiceViewState extends State<ServiceView> {
                                               child: Stack(
                                                 fit: StackFit.expand,
                                                 children: [
-                                                  // background image
-                                                  if (s.image.isNotEmpty)
-                                                    Image(
-                                                      image: CachedNetworkImageProvider(
-                                                        'https://www.salhly.lareenmedco.com/storage/${s.image}',
-                                                      ),
-
-                                                      fit: BoxFit.cover,
-                                                    )
-                                                  else
-                                                    Container(
-                                                      color:
-                                                          Colors.grey.shade200,
-                                                    ),
+                                                   // background image
+                                                   if (s.image.isNotEmpty)
+                                                     CachedNetworkImage(
+                                                       imageUrl:
+                                                           'https://www.salhly.lareenmedco.com/storage/${s.image}',
+                                                       fit: BoxFit.cover,
+                                                       placeholder: (context, url) =>
+                                                           Container(
+                                                         color: Colors.grey.shade200,
+                                                         child: Center(
+                                                           child: CircularProgressIndicator(
+                                                             color: AppColors.four,
+                                                             strokeWidth: 2,
+                                                           ),
+                                                         ),
+                                                       ),
+                                                       errorWidget: (context, url, error) =>
+                                                           Container(
+                                                         color: Colors.grey.shade200,
+                                                         child: const Icon(
+                                                           Icons.broken_image,
+                                                           color: Colors.grey,
+                                                           size: 32,
+                                                         ),
+                                                       ),
+                                                     )
+                                                   else
+                                                     Container(
+                                                       color:
+                                                           Colors.grey.shade200,
+                                                     ),
 
                                                   // bottom gradient
                                                   Positioned(

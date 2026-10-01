@@ -13,7 +13,7 @@ import 'features/auth/view/onboard_scr.dart';
 import 'features/auth/view/splash_screen.dart';
 import 'features/auth/view/update_required_screen.dart';
 import 'features/home/view/home_navigation_view.dart';
-import 'features/home/view/new_home_page_view.dart';
+import 'features/home_admin/view/home_admin_view.dart';
 import 'features/home_worker/view/home_worker_view.dart';
 import 'firebase_options.dart';
 import 'notifiction_services.dart';
@@ -102,6 +102,7 @@ class SuperApp extends StatelessWidget {
             "/login": (context) => const Login(),
             "/home": (context) => const HomeNavigationView(),
             "/homeworker": (context) => const HomeWorkerView(),
+            "/homeadmin": (context) => const HomeAdminView(),
             "/update": (context) => const UpdateRequiredScreen(),
           },
         );

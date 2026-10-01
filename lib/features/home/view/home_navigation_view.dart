@@ -1,4 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../requests/view/requests_view.dart';
 import '../../user/view/update_user.dart';
@@ -26,6 +29,7 @@ class _HomeNavigationViewState extends State<HomeNavigationView> {
 
   void _onItemTapped(int index) {
     if (_selectedIndex == index) return;
+    HapticFeedback.lightImpact();
     setState(() => _selectedIndex = index);
   }
 
@@ -39,58 +43,71 @@ class _HomeNavigationViewState extends State<HomeNavigationView> {
       extendBody: true,
       bottomNavigationBar: SafeArea(
         top: false,
-        minimum: const EdgeInsets.fromLTRB(18, 0, 18, 12),
-        child: Container(
-          height: 76,
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.96),
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(
-              color: const Color(0xFFE3EEF4),
+        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              height: 74,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.68),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.65),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withOpacity(0.09),
+                    blurRadius: 28,
+                    offset: const Offset(0, 10),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.14),
+                    blurRadius: 18,
+                    offset: const Offset(0, 4),
+                    spreadRadius: -2,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  _buildDestination(
+                    index: 0,
+                    icon: Icons.home_outlined,
+                    selectedIcon: Icons.home_rounded,
+                    label: 'الرئيسية',
+                  ),
+                  _buildDestination(
+                    index: 1,
+                    icon: Icons.swap_horiz_outlined,
+                    selectedIcon: Icons.swap_horiz_rounded,
+                    label: 'بيع واستبدال',
+                  ),
+                  _buildDestination(
+                    index: 2,
+                    icon: Icons.local_offer_outlined,
+                    selectedIcon: Icons.local_offer_rounded,
+                    label: 'العروض',
+                  ),
+                  _buildDestination(
+                    index: 3,
+                    icon: Icons.receipt_long_outlined,
+                    selectedIcon: Icons.receipt_long_rounded,
+                    label: 'الطلبات',
+                  ),
+                  _buildDestination(
+                    index: 4,
+                    icon: Icons.person_outline_rounded,
+                    selectedIcon: Icons.person_rounded,
+                    label: 'حسابي',
+                  ),
+                ],
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF4682A9).withOpacity(0.16),
-                blurRadius: 24,
-                spreadRadius: 1,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              _buildDestination(
-                index: 0,
-                icon: Icons.home_outlined,
-                selectedIcon: Icons.home_rounded,
-                label: 'الرئيسية',
-              ),
-              _buildDestination(
-                index: 1,
-                icon: Icons.swap_horiz_outlined,
-                selectedIcon: Icons.swap_horiz_rounded,
-                label: 'بيع واستبدال',
-              ),
-              _buildDestination(
-                index: 2,
-                icon: Icons.local_offer_outlined,
-                selectedIcon: Icons.local_offer_rounded,
-                label: 'العروض',
-              ),
-              _buildDestination(
-                index: 3,
-                icon: Icons.receipt_long_outlined,
-                selectedIcon: Icons.receipt_long_rounded,
-                label: 'الطلبات',
-              ),
-              _buildDestination(
-                index: 4,
-                icon: Icons.person_outline_rounded,
-                selectedIcon: Icons.person_rounded,
-                label: 'حسابي',
-              ),
-            ],
           ),
         ),
       ),
@@ -106,36 +123,39 @@ class _HomeNavigationViewState extends State<HomeNavigationView> {
     final isSelected = _selectedIndex == index;
 
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () => _onItemTapped(index),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 240),
-            curve: Curves.easeOut,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFFEAF4F8)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 240),
-                  width: isSelected ? 30 : 27,
-                  height: isSelected ? 27 : 24,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFF4682A9)
-                        : const Color(0xFFF1F5F7),
-                    shape: BoxShape.circle,
-                  ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onItemTapped(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                width: isSelected ? 40 : 34,
+                height: isSelected ? 32 : 28,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.blue : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Center(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     transitionBuilder: (child, animation) => ScaleTransition(
@@ -147,40 +167,35 @@ class _HomeNavigationViewState extends State<HomeNavigationView> {
                       key: ValueKey('$index-$isSelected'),
                       color: isSelected
                           ? Colors.white
-                          : const Color(0xFF78909C),
-                      size: isSelected ? 17 : 16,
+                          : const Color(0xFF64748B),
+                      size: isSelected ? 19 : 18,
                     ),
                   ),
                 ),
-                const SizedBox(height: 1),
-                Text(
+              ),
+              const SizedBox(height: 5),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 240),
+                style: GoogleFonts.cairo(
+                  color: isSelected
+                      ? Colors.blue
+                      : const Color(0xFF64748B),
+                  fontSize: isSelected ? 11 : 10,
+                  fontWeight:
+                      isSelected ? FontWeight.w800 : FontWeight.w600,
+                  height: 1.1,
+                ),
+                child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isSelected
-                        ? const Color(0xFF4682A9)
-                        : const Color(0xFF607D8B),
-                    fontSize: 10,
-                    fontWeight:
-                        isSelected ? FontWeight.w800 : FontWeight.w600,
-                  ),
                 ),
-                const SizedBox(height: 1),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 240),
-                  width: isSelected ? 18 : 0,
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4682A9),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+
