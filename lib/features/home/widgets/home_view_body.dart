@@ -202,12 +202,12 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                                     vertical: 4,
                                   ),
                                   scrollDirection: Axis.horizontal,
-                                  itemCount: controller.services.length,
+                                  itemCount: controller.goldenServices.length,
                                   separatorBuilder: (_, __) =>
                                       const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
                                     return GoldenServiceCard(
-                                      service: controller.services[index],
+                                      service: controller.goldenServices[index],
                                       index: index,
                                     );
                                   },
