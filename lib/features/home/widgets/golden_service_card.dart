@@ -8,6 +8,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../configs/app_colors.dart';
 import '../../service/view/service_view.dart';
+import '../controller/home_controller.dart';
 import '../model/service_model.dart';
 
 class GoldenServiceCard extends StatefulWidget {
@@ -27,21 +28,17 @@ class GoldenServiceCard extends StatefulWidget {
 class _GoldenServiceCardState extends State<GoldenServiceCard> {
   bool _isPressed = false;
 
-  // Selected Golden Tool Images
-  static const List<String> _selectedGoldenImages = [
-    '111.jpg',
-    '113.jpg',
-    '112.jpg',
-    '114.jpg',
-  ];
-
   @override
   Widget build(BuildContext context) {
     const double cardWidth = 200.0;
     const double cardHeight = 104.0;
+    const String defaultBgImage = 'assets/images/114.jpg';
 
-    final String bgImage =
-        'assets/images/114.jpg';
+    final homeCtrl = Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
+    final String customGoldenImage = homeCtrl?.fullGoldenImage ?? '';
+    final String goldenTagTitle = (homeCtrl?.goldenTitle != null && homeCtrl!.goldenTitle.isNotEmpty)
+        ? homeCtrl.goldenTitle
+        : 'أولوية فورية';
 
     return AnimatedScale(
       scale: _isPressed ? 0.96 : 1.0,
@@ -55,7 +52,11 @@ class _GoldenServiceCardState extends State<GoldenServiceCard> {
           HapticFeedback.selectionClick();
           Get.to(
             () => ServiceView(),
-            arguments: {'serviceId': widget.service.id},
+            arguments: {
+              'serviceId': widget.service.id,
+              'isGolden': true,
+              'serviceTitle': widget.service.title,
+            },
           );
         },
         child: Container(
@@ -84,15 +85,31 @@ class _GoldenServiceCardState extends State<GoldenServiceCard> {
             borderRadius: BorderRadius.circular(16),
             child: Stack(
               children: [
-                // 1. Golden Tools Image covering the card
+                // 1. Golden Tools Image covering the card (API Image with Asset Fallback only on Error)
                 Positioned.fill(
-                  child: Image.asset(
-                    bgImage,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFF0F172A),
-                    ),
-                  ),
+                  child: customGoldenImage.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: customGoldenImage,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Shimmer.fromColors(
+                            baseColor: const Color(0xFF1E293B),
+                            highlightColor: const Color(0xFF334155),
+                            child: Container(
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                          errorWidget: (_, __, ___) => Image.asset(
+                            defaultBgImage,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Image.asset(
+                          defaultBgImage,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
                 ),
 
                 // 2. Home Header Blue Gradient Overlay
@@ -103,7 +120,7 @@ class _GoldenServiceCardState extends State<GoldenServiceCard> {
                         begin: Alignment.topRight,
                         end: Alignment.bottomLeft,
                         colors: [
-                          const Color(0xFF0284C7).withValues(alpha: 0.88),
+                          Colors.blue.withValues(alpha: 0.88),
                           const Color(0xFF0369A1).withValues(alpha: 0.72),
                           const Color(0xFFFDE68A).withValues(alpha: 0.55),
                         ],
@@ -199,7 +216,7 @@ class _GoldenServiceCardState extends State<GoldenServiceCard> {
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
-                                    'أولوية فورية',
+                                    goldenTagTitle,
                                     style: GoogleFonts.cairo(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -218,7 +235,6 @@ class _GoldenServiceCardState extends State<GoldenServiceCard> {
                     ],
                   ),
                 ),
-
               ],
             ),
           ),
@@ -227,3 +243,4 @@ class _GoldenServiceCardState extends State<GoldenServiceCard> {
     );
   }
 }
+

@@ -1,21 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:salhly/app.dart';
-import 'package:salhly/configs/app_colors.dart';
 import 'package:salhly/features/home/controller/home_controller.dart';
 import 'package:salhly/features/service/controller/service_controller.dart';
 import 'package:salhly/features/service/views/service_order_page.dart';
-import 'package:salhly/features/user/view/update_user.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-import '../../../core/utils/app_api.dart';
-import '../../user/view/update_password.dart';
 
 class ServiceView extends StatefulWidget {
   const ServiceView({super.key});
@@ -27,273 +17,287 @@ class ServiceView extends StatefulWidget {
 class _ServiceViewState extends State<ServiceView> {
   final controller = Get.put(ServiceController());
   String _search = '';
+  bool _isGolden = false;
 
   @override
   void initState() {
     super.initState();
+    if (Get.arguments != null) {
+      final args = Get.arguments as Map<String, dynamic>;
+      if (args['isGolden'] == true) {
+        _isGolden = true;
+      }
+    }
+
+    if (!_isGolden && Get.isRegistered<HomeController>()) {
+      final homeCtrl = Get.find<HomeController>();
+      _isGolden = homeCtrl.goldenServices.any((g) => g.id == controller.serviceId);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned.fill(child: Container(color: Colors.white)),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.35,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.blue,
-                    Colors.blue.withOpacity(0.55),
-                    Colors.white,
-                  ],
-                  stops: const [0.0, 0.6, 1.0],
-                ),
-              ),
-            ),
-          ),
-          GetBuilder<ServiceController>(
-            builder: (controller) {
-              final items = _search.trim().isEmpty
-                  ? controller.subServices
-                  : controller.subServices
-                        .where(
-                          (s) => s.title.toLowerCase().contains(
-                            _search.toLowerCase(),
-                          ),
-                        )
-                        .toList();
+    const primaryColor = Colors.blue;
 
-              return controller.isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.four,
-                        strokeWidth: 4,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: primaryColor,
+        title: Text(
+          'أقسام الخدمة',
+          style: GoogleFonts.cairo(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 17.5,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: GetBuilder<ServiceController>(
+        builder: (ctrl) {
+          if (ctrl.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            );
+          }
+
+          final items = _search.trim().isEmpty
+              ? ctrl.subServices
+              : ctrl.subServices
+                    .where(
+                      (s) => s.title.toLowerCase().contains(
+                        _search.toLowerCase(),
                       ),
                     )
-                  : Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Search / header
+                    .toList();
 
-                          SizedBox(height: 40),
-                          Row(
-                            children: [
-                              GestureDetector(
-                                  onTap: (){
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Icon(Icons.arrow_back, color: Colors.white, size: 28)),
-                              const SizedBox(width: 12),
-                              Text(
-                                'أقسام الخدمة',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: TextField(
-                                    onChanged: (v) =>
-                                        setState(() => _search = v),
-                                    decoration: InputDecoration(
-                                      hintText: 'ابحث عن خدمة...',
-                                      prefixIcon: Icon(
-                                        Icons.search,
-                                        color: AppColors.four,
-                                      ),
-                                      border: InputBorder.none,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ) /*
-                          const SizedBox(width: 12),
-                          Container(
-                            height: 44,
-                            width: 44,
-                            decoration: BoxDecoration(color: AppColors.four, borderRadius: BorderRadius.circular(12)),
-                            child: IconButton(
-                              onPressed: () {
-                                // quick refresh
-                                controller.getService(controller.serviceId);
-                              },
-                              icon: const Icon(Icons.refresh, color: Colors.white),
+          return Column(
+            children: [
+              // Search Header
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: Container(
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: TextField(
+                    onChanged: (v) => setState(() => _search = v),
+                    style: GoogleFonts.cairo(fontSize: 13.5),
+                    decoration: InputDecoration(
+                      hintText: 'ابحث عن قسم أو خدمة فرعية...',
+                      hintStyle: GoogleFonts.cairo(
+                        fontSize: 12.5,
+                        color: Colors.grey.shade400,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: primaryColor,
+                        size: 20,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Sub-Services List
+              Expanded(
+                child: items.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 48,
+                              color: Colors.grey.shade400,
                             ),
-                          )*/,
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-
-
-                          // Grid of service cards
-                          Expanded(
-                            child: items.isEmpty
-                                ? Center(
-                                    child: Text(
-                                      'لم يتم العثور على خدمات',
-                                      style: GoogleFonts.cairo(),
+                            const SizedBox(height: 10),
+                            Text(
+                              'لم يتم العثور على أي أقسام مطابقة',
+                              style: GoogleFonts.cairo(
+                                fontSize: 13.5,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final s = items[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            height: 140,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: Colors.white,
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Get.to(
+                                    () => ServiceOrderPage(
+                                      serviceId: ctrl.serviceId,
+                                      subServiceId: s.id,
+                                      isGolden: _isGolden,
                                     ),
-                                  )
-                                : GridView.builder(
-                                    padding: const EdgeInsets.only(top: 20),
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 1,
-                                          crossAxisSpacing: 12,
-                                          mainAxisSpacing: 17,
-                                          childAspectRatio: 1.8,
-                                        ),
-                                    itemCount: items.length,
-                                    itemBuilder: (context, index) {
-                                      final s = items[index];
-                                      return Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          onTap: () {
-                                            Get.to(
-                                              () => ServiceOrderPage(
-                                                serviceId: controller.serviceId,
-                                                subServiceId: s.id,
+                                  );
+                                },
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      // Image
+                                      if (s.image.isNotEmpty)
+                                        CachedNetworkImage(
+                                          imageUrl:
+                                              'https://www.salhly.lareenmedco.com/storage/${s.image}',
+                                          fit: BoxFit.cover,
+                                          placeholder: (c, u) => Container(
+                                            color: Colors.grey.shade100,
+                                            child: const Center(
+                                              child: CircularProgressIndicator(
+                                                color: primaryColor,
+                                                strokeWidth: 2,
                                               ),
-                                            );
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black12,
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 6),
-                                                ),
-                                              ],
                                             ),
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                              child: Stack(
-                                                fit: StackFit.expand,
-                                                children: [
-                                                   // background image
-                                                   if (s.image.isNotEmpty)
-                                                     CachedNetworkImage(
-                                                       imageUrl:
-                                                           'https://www.salhly.lareenmedco.com/storage/${s.image}',
-                                                       fit: BoxFit.cover,
-                                                       placeholder: (context, url) =>
-                                                           Container(
-                                                         color: Colors.grey.shade200,
-                                                         child: Center(
-                                                           child: CircularProgressIndicator(
-                                                             color: AppColors.four,
-                                                             strokeWidth: 2,
-                                                           ),
-                                                         ),
-                                                       ),
-                                                       errorWidget: (context, url, error) =>
-                                                           Container(
-                                                         color: Colors.grey.shade200,
-                                                         child: const Icon(
-                                                           Icons.broken_image,
-                                                           color: Colors.grey,
-                                                           size: 32,
-                                                         ),
-                                                       ),
-                                                     )
-                                                   else
-                                                     Container(
-                                                       color:
-                                                           Colors.grey.shade200,
-                                                     ),
+                                          ),
+                                          errorWidget: (c, u, e) => Container(
+                                            color: Colors.grey.shade100,
+                                            child: const Icon(
+                                              Icons.broken_image_rounded,
+                                              color: Colors.grey,
+                                              size: 32,
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        Container(color: Colors.grey.shade100),
 
-                                                  // bottom gradient
-                                                  Positioned(
-                                                    left: 0,
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    height: 72,
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                        gradient: LinearGradient(
-                                                          colors: [
-                                                            Colors.black
-                                                                .withOpacity(
-                                                                  0.6,
-                                                                ),
-                                                            Colors.transparent,
-                                                          ],
-                                                          begin: Alignment
-                                                              .bottomCenter,
-                                                          end: Alignment
-                                                              .topCenter,
-                                                        ),
-                                                      ),
+                                      // Gradient overlay for contrast
+                                      Positioned.fill(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                Colors.black.withValues(alpha: 0.1),
+                                                Colors.black.withValues(alpha: 0.75),
+                                              ],
+                                              stops: const [0.3, 1.0],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      // Card Content
+                                      Positioned(
+                                        left: 14,
+                                        right: 14,
+                                        bottom: 14,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                s.title,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.cairo(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  shadows: [
+                                                    Shadow(
+                                                      color: Colors.black.withValues(alpha: 0.6),
+                                                      blurRadius: 4,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 5,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: primaryColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    'طلب الآن',
+                                                    style: GoogleFonts.cairo(
+                                                      fontSize: 11.5,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
                                                     ),
                                                   ),
-
-                                                  // title
-                                                  Positioned(
-                                                    left: 12,
-                                                    bottom: 12,
-                                                    right: 12,
-                                                    child: Text(
-                                                      s.title,
-                                                      maxLines: 2,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: GoogleFonts.cairo(
-                                                        color: Colors.white,
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                      ),
-                                                    ),
+                                                  const SizedBox(width: 4),
+                                                  const Icon(
+                                                    Icons.arrow_forward_ios_rounded,
+                                                    size: 11,
+                                                    color: Colors.white,
                                                   ),
                                                 ],
                                               ),
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      );
-                                    },
+                                      ),
+                                    ],
                                   ),
-                          ),
-                        ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-            },
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }

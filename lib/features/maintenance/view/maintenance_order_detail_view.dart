@@ -438,7 +438,7 @@ class _MaintenanceOrderDetailViewState extends State<MaintenanceOrderDetailView>
               Divider(color: Colors.grey.shade200, height: 1),
               SizedBox(height: 12),
               _InfoItem(
-                'تاريخ الإنشاء',
+                'الإنشاء',
                 formatDate(order.createdAt),
               ),
             ],

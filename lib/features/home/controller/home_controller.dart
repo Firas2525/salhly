@@ -78,6 +78,21 @@ class HomeController extends GetxController {
   String buyTitle = '';
   String buyDesc = '';
   String buyImage = '';
+  String goldenTitle = '';
+  String goldenDesc = '';
+  String goldenImage = '';
+
+  String get fullGoldenImage {
+    if (goldenImage.isEmpty) return '';
+    if (goldenImage.startsWith('http://') || goldenImage.startsWith('https://')) {
+      return goldenImage;
+    }
+    final clean = goldenImage.startsWith('/') ? goldenImage.substring(1) : goldenImage;
+    if (clean.startsWith('storage/')) {
+      return 'https://www.salhly.lareenmedco.com/$clean';
+    }
+    return 'https://www.salhly.lareenmedco.com/storage/$clean';
+  }
 
   // Notifications
   List<NotificationModel> notifications = [];
@@ -470,6 +485,10 @@ class HomeController extends GetxController {
         buyDesc = appData['buy']?['desc'] ?? '';
         buyImage = appData['buy']?['image'] ?? '';
 
+        goldenTitle = appData['golden']?['title'] ?? '';
+        goldenDesc = appData['golden']?['desc'] ?? '';
+        goldenImage = appData['golden']?['image'] ?? '';
+
         await App.prefs.setString('app_title', appTitle);
         await App.prefs.setString('app_top_background', appTopBackground);
         await App.prefs.setString('app_bottom_background', appBottomBackground);
@@ -480,6 +499,9 @@ class HomeController extends GetxController {
         await App.prefs.setString('app_buy_title', buyTitle);
         await App.prefs.setString('app_buy_desc', buyDesc);
         await App.prefs.setString('app_buy_image', buyImage);
+        await App.prefs.setString('app_golden_title', goldenTitle);
+        await App.prefs.setString('app_golden_desc', goldenDesc);
+        await App.prefs.setString('app_golden_image', goldenImage);
 
         update();
       } else {
@@ -677,6 +699,19 @@ class HomeController extends GetxController {
 
   @override
   void onInit() {
+    appTitle = App.prefs.getString('app_title') ?? '';
+    appTopBackground = App.prefs.getString('app_top_background') ?? '';
+    appBottomBackground = App.prefs.getString('app_bottom_background') ?? '';
+    appTabbarBackground = App.prefs.getString('app_tabbar_background') ?? '';
+    replaceTitle = App.prefs.getString('app_replace_title') ?? '';
+    replaceDesc = App.prefs.getString('app_replace_desc') ?? '';
+    replaceImage = App.prefs.getString('app_replace_image') ?? '';
+    buyTitle = App.prefs.getString('app_buy_title') ?? '';
+    buyDesc = App.prefs.getString('app_buy_desc') ?? '';
+    buyImage = App.prefs.getString('app_buy_image') ?? '';
+    goldenTitle = App.prefs.getString('app_golden_title') ?? '';
+    goldenDesc = App.prefs.getString('app_golden_desc') ?? '';
+    goldenImage = App.prefs.getString('app_golden_image') ?? '';
     initializeHome();
     super.onInit();
   }

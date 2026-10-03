@@ -17,13 +17,21 @@ class ExchangePieceRequest {
 
   factory ExchangePieceRequest.fromJson(Map<String, dynamic> json) {
     return ExchangePieceRequest(
-      id: json['id'],
-      status: json['status'] ?? '',
-      adminNote: json['admin_note'],
-      createdAt: DateTime.parse(json['created_at']),
-      user: User.fromJson(json['user']),
-      pieces: json['pieces'] != null
-          ? (json['pieces'] as List).map((p) => ExchangePiece.fromJson(p)).toList()
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      status: json['status']?.toString() ?? '',
+      adminNote: json['admin_note']?.toString(),
+      createdAt: json['created_at'] != null
+          ? (DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      user: json['user'] != null && json['user'] is Map<String, dynamic>
+          ? User.fromJson(json['user'])
+          : User(id: 0, name: '', phone: ''),
+      pieces: json['pieces'] is List
+          ? (json['pieces'] as List)
+              .map((p) => ExchangePiece.fromJson(p))
+              .toList()
           : [],
     );
   }
@@ -42,9 +50,11 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      name: json['name'] ?? '',
-      phone: json['phone'] ?? '',
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
     );
   }
 }
@@ -72,22 +82,24 @@ class ExchangePiece {
 
   factory ExchangePiece.fromJson(Map<String, dynamic> json) {
     return ExchangePiece(
-      id: json['id'],
-      description: json['description'] ?? '',
-      voiceRecord: json['voice_record'],
-      voiceRecordUrl: json['voice_record_url'],
-      adminDescription: json['admin_description'],
-      adminEstimatedPrice: json['admin_estimated_price'],
-      offers: json['offers'] != null
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      description: json['description']?.toString() ?? '',
+      voiceRecord: json['voice_record']?.toString(),
+      voiceRecordUrl: json['voice_record_url']?.toString(),
+      adminDescription: json['admin_description']?.toString(),
+      adminEstimatedPrice: json['admin_estimated_price']?.toString(),
+      offers: json['offers'] is List
           ? (json['offers'] as List)
               .map((o) => ExchangePieceOffer.fromJson(o))
               .toList()
           : [],
-      images: json['images'] != null
-        ? (json['images'] as List)
-          .map((i) => ExchangePieceImage.fromJson(i))
-          .toList()
-        : [],
+      images: json['images'] is List
+          ? (json['images'] as List)
+              .map((i) => ExchangePieceImage.fromJson(i))
+              .toList()
+          : [],
     );
   }
 }
@@ -111,12 +123,14 @@ class ExchangePieceOffer {
 
   factory ExchangePieceOffer.fromJson(Map<String, dynamic> json) {
     return ExchangePieceOffer(
-      id: json['id'],
-      description: json['description'] ?? '',
-      image: json['image'] ?? '',
-      imageUrl: json['image_url'] ?? '',
-      differencePrice: json['difference_price'] ?? '',
-      images: json['images'] != null
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      description: json['description']?.toString() ?? '',
+      image: json['image']?.toString() ?? '',
+      imageUrl: json['image_url']?.toString() ?? '',
+      differencePrice: json['difference_price']?.toString() ?? '',
+      images: json['images'] is List
           ? (json['images'] as List)
               .map((i) => ExchangePieceImage.fromJson(i))
               .toList()
@@ -138,9 +152,11 @@ class ExchangePieceImage {
 
   factory ExchangePieceImage.fromJson(Map<String, dynamic> json) {
     return ExchangePieceImage(
-      id: json['id'],
-      image: json['image'] ?? '',
-      imageUrl: json['image_url'] ?? '',
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      image: json['image']?.toString() ?? '',
+      imageUrl: json['image_url']?.toString() ?? '',
     );
   }
 }

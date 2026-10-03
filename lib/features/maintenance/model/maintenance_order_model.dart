@@ -5,6 +5,7 @@ class MaintenanceOrderModel {
   final String address;
   final String description;
   final String status;
+  final int paymentProcessed;
   final ServiceData service;
   final SubServiceData subService;
   final dynamic report;
@@ -18,6 +19,7 @@ class MaintenanceOrderModel {
     required this.address,
     required this.description,
     required this.status,
+    this.paymentProcessed = 0,
     required this.service,
     required this.subService,
     this.report,
@@ -25,7 +27,23 @@ class MaintenanceOrderModel {
     required this.createdAt,
   });
 
+  bool get isPaymentProcessed => paymentProcessed == 1;
+
   factory MaintenanceOrderModel.fromJson(Map<String, dynamic> json) {
+    int paymentProcessed = 0;
+    final dynamic rawPayment = json['payment_processed'] ??
+        json['is_paid'] ??
+        (json['report'] is Map ? (json['report']['payment_processed'] ?? json['report']['is_paid']) : null);
+    if (rawPayment != null) {
+      if (rawPayment is int) {
+        paymentProcessed = rawPayment == 1 ? 1 : 0;
+      } else if (rawPayment is bool) {
+        paymentProcessed = rawPayment ? 1 : 0;
+      } else {
+        paymentProcessed = int.tryParse(rawPayment.toString()) ?? 0;
+      }
+    }
+
     return MaintenanceOrderModel(
       id: json['id'],
       fullName: json['full_name'] ?? '',
@@ -33,6 +51,7 @@ class MaintenanceOrderModel {
       address: json['address'] ?? '',
       description: json['description'] ?? '',
       status: json['status'] ?? '',
+      paymentProcessed: paymentProcessed,
       service: ServiceData.fromJson(json['service'] ?? {}),
       subService: SubServiceData.fromJson(json['sub_service'] ?? {}),
       report: json['report'],

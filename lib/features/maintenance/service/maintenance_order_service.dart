@@ -17,6 +17,13 @@ class MaintenanceOrderService {
       };
       var uri = Uri.parse("${AppApi.baseUrl}/order/find_maintenance/$orderId");
 
+      final curl = StringBuffer()
+        ..writeln("curl --location '$uri' \\")
+        ..writeln(headers.entries.map((e) => "--header '${e.key}: ${e.value}'").join(' \\\n'));
+      print("\n================== cURL [Find Maintenance Order #$orderId] ==================");
+      print(curl.toString());
+      print("=============================================================================\n");
+
       var request = http.Request('GET', uri);
       request.headers.addAll(headers);
 

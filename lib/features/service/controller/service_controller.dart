@@ -82,9 +82,10 @@ class ServiceController extends GetxController {
 
   @override
   void onInit() {
-  serviceId = Get.arguments['serviceId'];
-        getService(serviceId);
-
+    if (Get.arguments != null && Get.arguments['serviceId'] != null) {
+      serviceId = Get.arguments['serviceId'];
+      getService(serviceId);
+    }
     super.onInit();
   }
 

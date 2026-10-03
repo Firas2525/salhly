@@ -392,7 +392,7 @@ class _SellPieceDetailViewState extends State<SellPieceDetailView> {
                           Icon(Icons.attach_money, color: AppColors.four),
                           SizedBox(width: 8),
                           Text(
-                            'السعر المتوقع: ${piece.expectedPrice}',
+                            'السعر المتوقع: ${piece.expectedPrice} ${piece.currency == 'USD' ? '\$' : 'ل.س'}',
                             style: GoogleFonts.cairo(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

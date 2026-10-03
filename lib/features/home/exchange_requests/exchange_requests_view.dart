@@ -374,11 +374,11 @@ class _ExchangeRequestsViewState extends State<ExchangeRequestsView> {
                                                     ),
                                                   ),
                                                   if (piece.adminDescription !=
-                                                      null) ...[
+                                                      null &&
+                                                      piece.adminDescription!.isNotEmpty) ...[
                                                     SizedBox(height: 4),
                                                     Text(
-                                                      'وصف الإدارة: ${piece
-                                                          .adminDescription}',
+                                                      'وصف الإدارة: ${piece.adminDescription}',
                                                       maxLines: 2,
                                                       overflow:
                                                       TextOverflow.ellipsis,
@@ -388,6 +388,19 @@ class _ExchangeRequestsViewState extends State<ExchangeRequestsView> {
                                                             .shade600,
                                                         fontStyle: FontStyle
                                                             .italic,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  if (piece.adminEstimatedPrice !=
+                                                      null &&
+                                                      piece.adminEstimatedPrice!.isNotEmpty) ...[
+                                                    SizedBox(height: 4),
+                                                    Text(
+                                                      'السعر التقديري: ${piece.adminEstimatedPrice} ل.س',
+                                                      style: GoogleFonts.cairo(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: const Color(0xFF0F766E),
                                                       ),
                                                     ),
                                                   ],

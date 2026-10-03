@@ -1,16 +1,21 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:salhly/configs/app_colors.dart';
-import 'package:salhly/features/auth/view/login.dart';
-import '../../../app.dart';
+import 'package:salhly/core/utils/assets_manager.dart';
+import 'package:salhly/core/utils/ui_utils.dart';
+import 'package:salhly/features/home/view/about_contact_view.dart';
+import 'package:salhly/features/home/widgets/animated_logo.dart';
+import 'package:salhly/features/notifications/view/notifications_page.dart';
+
 import '../controller/home_worker_controller.dart';
+import '../model/maintenance_order_model.dart';
+import 'create_worker_maintenance_view.dart';
 import 'order_detail_worker_view.dart';
-import 'package:salhly/features/home/view/privacy_policy_view.dart';
-import '../../../core/utils/ui_utils.dart';
+import 'worker_profile_view.dart';
 
 class HomeWorkerView extends StatefulWidget {
   const HomeWorkerView({super.key});
@@ -19,525 +24,918 @@ class HomeWorkerView extends StatefulWidget {
   State<HomeWorkerView> createState() => _HomeWorkerViewState();
 }
 
-class _HomeWorkerViewState extends State<HomeWorkerView>
-    with TickerProviderStateMixin {
+class _HomeWorkerViewState extends State<HomeWorkerView> {
   final controller = Get.put(HomeWorkerController());
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // الخروج من التطبيق عند الضغط على زر الرجوع
-        // ننادي SystemNavigator.pop فقط ونمنع إطار فلاتر من عمل pop للمسار
         SystemNavigator.pop();
         return false;
       },
       child: Scaffold(
-        backgroundColor: Color(0xFFF7F8FA),
-        appBar: AppBar(
-        centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [AppColors.four, AppColors.four.withOpacity(0.85)],
-            ),
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: [
+            _buildOrdersTab(),
+            const WorkerProfileView(showAppBar: false),
+          ],
+        ),
+        bottomNavigationBar: _buildBottomNav(),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -3),
+          ),
+        ],
+        border: const Border(
+          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                index: 0,
+                icon: Icons.assignment_outlined,
+                activeIcon: Icons.assignment_rounded,
+                label: 'طلبات الصيانة',
+              ),
+              _buildNavItem(
+                index: 1,
+                icon: Icons.person_outline_rounded,
+                activeIcon: Icons.person_rounded,
+                label: 'الملف الشخصي',
+              ),
+            ],
           ),
         ),
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'طلبات العامل',
-          style: TextStyle(
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+  }) {
+    final isSelected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.blue.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? activeIcon : icon,
+              color: isSelected ? Colors.blue : const Color(0xFF94A3B8),
+              size: 22,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.cairo(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.blue : const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrdersTab() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.blue,
+        title: Text(
+          'طلبات الفني',
+          style: GoogleFonts.cairo(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 18,
+          ),
+        ),
+        leading: Padding(
+          padding: const EdgeInsets.only(right: 14.0),
+          child: GestureDetector(
+            onTap: () => Get.to(() => const AboutContactView()),
+            child: Center(
+              child: SizedBox(
+                height: 36,
+                width: 36,
+                child: AnimatedLogo(assetPath: ImgAsset.whiteLogo),
+              ),
+            ),
           ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout_outlined, color: Colors.white),
-            onPressed: () {
-              final ctrl = Get.find<HomeWorkerController>();
-              showConfirmDialog(
-                title: 'تسجيل خروج',
-                middleText: 'هل انت متأكد تسجيل خروجك من الحساب',
-                onConfirm: () {
-                  ctrl.logout();
-                },
-                onCancel: () {},
-              );
-            },
+            tooltip: 'تسجيل صيانة خارجية',
+            onPressed: () => Get.to(() => const CreateWorkerMaintenanceView()),
+            icon: const Icon(
+              Icons.add_task_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          IconButton(
+            tooltip: 'الإشعارات',
+            onPressed: () => Get.to(() => const NotificationsPage()),
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: GoogleFonts.cairo(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-          tabs: [
-            Tab(text: 'قيد الانتظار'),
-            Tab(text: 'موافق عليها'),
-            Tab(text: 'مكتملة'),
-          ],
-        ),
       ),
-      // drawer removed by request - only logout icon remains in AppBar
       body: GetBuilder<HomeWorkerController>(
         builder: (ctrl) {
-          if (ctrl.isLoading) {
-            // show shimmer skeleton cards similar to home screen style
-            return Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
-              child: ListView.separated(
-                padding: const EdgeInsets.all(12),
-                separatorBuilder: (_, __) => SizedBox(height: 12),
-                itemCount: 4,
-                itemBuilder: (context, index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(width: 6, height: 80, color: Colors.white),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 150,
-                                height: 16,
-                                color: Colors.white,
-                              ),
-                              SizedBox(height: 8),
-                              Container(
-                                width: 120,
-                                height: 12,
-                                color: Colors.white,
-                              ),
-                              SizedBox(height: 12),
-                              Container(
-                                width: double.infinity,
-                                height: 12,
-                                color: Colors.white,
-                              ),
-                              SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    width: 80,
-                                    height: 12,
-                                    color: Colors.white,
-                                  ),
-                                  Container(
-                                    width: 50,
-                                    height: 28,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            );
-          }
+          final items = ctrl.filteredOrders;
 
-          return TabBarView(
-            controller: _tabController,
+          return Column(
             children: [
-              _buildOrdersList(ctrl.pendingOrders, 'pending', ctrl),
-              _buildOrdersList(ctrl.approvedOrders, 'approved', ctrl),
-              _buildOrdersList(ctrl.completedOrders, 'completed', ctrl),
+              // Filter Chips Row
+              Container(
+                width: double.infinity,
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    children: [
+                      _buildFilterChip(
+                        label: 'الكل',
+                        count: ctrl.totalCount,
+                        isSelected: ctrl.selectedFilter == 'all',
+                        color: Colors.blue,
+                        onTap: () => ctrl.setFilter('all'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: 'قيد الانتظار',
+                        count: ctrl.pendingCount,
+                        isSelected: ctrl.selectedFilter == 'pending',
+                        color: const Color(0xFFD97706),
+                        onTap: () => ctrl.setFilter('pending'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: 'موافق عليها',
+                        count: ctrl.approvedCount,
+                        isSelected: ctrl.selectedFilter == 'approved',
+                        color: const Color(0xFF2563EB),
+                        onTap: () => ctrl.setFilter('approved'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: 'مكتملة (مدفوعة)',
+                        count: ctrl.completedPaidCount,
+                        isSelected: ctrl.selectedFilter == 'completed_paid',
+                        color: const Color(0xFF16A34A),
+                        onTap: () => ctrl.setFilter('completed_paid'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: 'مكتملة (غير مدفوعة)',
+                        count: ctrl.completedUnpaidCount,
+                        isSelected: ctrl.selectedFilter == 'completed_unpaid',
+                        color: const Color(0xFFEA580C),
+                        onTap: () => ctrl.setFilter('completed_unpaid'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+              // Orders List
+              Expanded(
+                child: RefreshIndicator(
+                  color: Colors.blue,
+                  backgroundColor: Colors.white,
+                  onRefresh: () => ctrl.refreshAllOrders(),
+                  child: ctrl.isLoading
+                      ? ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
+                          itemCount: 4,
+                          itemBuilder: (context, index) => _buildSkeletonCard(),
+                        )
+                      : items.isEmpty
+                          ? _buildEmptyState(ctrl.selectedFilter)
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                              itemCount: items.length,
+                              itemBuilder: (context, index) {
+                                return _buildOrderCard(items[index], ctrl);
+                              },
+                            ),
+                ),
+              ),
             ],
           );
         },
       ),
-    ),
     );
   }
 
-  Widget _buildOrdersList(
-    List orders,
-    String status,
-    HomeWorkerController ctrl,
-  ) {
-    // Pull-to-refresh per-tab so the ListView can receive overscroll gestures
-    Future<void> _onRefresh() async {
-      try {
-        await Future.wait<void>([ctrl.refreshAllOrders(), ctrl.getAboutUs()]);
-      } catch (e) {
-        // controller shows snackbars on errors
-      }
-    }
-
-    if (orders.isEmpty) {
-      return RefreshIndicator(
-        color: AppColors.four,
-        onRefresh: _onRefresh,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(vertical: 80),
+  Widget _buildFilterChip({
+    required String label,
+    required int count,
+    required bool isSelected,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? color : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.inbox_outlined,
-                    size: 80,
-                    color: Colors.grey.shade300,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'لا توجد طلبات',
-                    style: GoogleFonts.cairo(
-                      fontSize: 18,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+            Text(
+              label,
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : const Color(0xFF475569),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withOpacity(0.25)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: GoogleFonts.cairo(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : color,
+                ),
               ),
             ),
           ],
         ),
-      );
-    }
-
-    return RefreshIndicator(
-      color: AppColors.four,
-      onRefresh: _onRefresh,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(12),
-        separatorBuilder: (_, __) => SizedBox(height: 12),
-        itemCount: orders.length,
-        itemBuilder: (context, index) {
-          final order = orders[index];
-          return _buildOrderCardWithAction(order);
-        },
       ),
     );
   }
 
-  String _getStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'قيد الانتظار';
-      case 'approved':
-        return 'موافق عليه';
-      case 'completed':
-        return 'مكتمل';
-      default:
-        return status;
-    }
-  }
+  Widget _buildOrderCard(MaintenanceOrderModel order, HomeWorkerController ctrl) {
+    final statusColor = _getStatusColor(order.status, isPaymentProcessed: order.isPaymentProcessed);
+    final statusText = _getStatusText(order.status, isPaymentProcessed: order.isPaymentProcessed);
+    final statusLower = order.status.toLowerCase();
+    final isPending = statusLower.contains('pending') || statusLower.contains('قيد');
+    final isApproved = statusLower.contains('approved') || statusLower.contains('موافق');
+    final isCompleted = statusLower.contains('completed') || statusLower.contains('مكتمل');
 
-  Widget _buildOrderCardWithAction(dynamic order) {
-    final statusLower = order.status?.toString().toLowerCase() ?? '';
-    Color statusColor;
-    IconData statusIcon;
-    if (statusLower.contains('pending') || statusLower.contains('قيد')) {
-      statusColor = Colors.redAccent;
-      statusIcon = Icons.hourglass_top_rounded;
-    } else if (statusLower.contains('approved') ||
-        statusLower.contains('موافق')) {
-      statusColor = const Color(0xFF1E88E5);
-      statusIcon = Icons.thumb_up_alt;
-    } else if (statusLower.contains('completed') ||
-        statusLower.contains('مكتمل')) {
-      statusColor = Colors.green.shade600;
-      statusIcon = Icons.check_circle_outline;
-    } else if (statusLower.contains('cancel') ||
-        statusLower.contains('ملغى') ||
-        statusLower.contains('ملغي')) {
-      statusColor = Colors.black;
-      statusIcon = Icons.cancel_outlined;
-    } else {
-      statusColor = AppColors.four;
-      statusIcon = Icons.info_outline;
-    }
-
-    bool isPending =
-      statusLower.contains('pending') || statusLower.contains('قيد');
-    bool isApproved =
-      statusLower.contains('approved') || statusLower.contains('موافق');
-
-    return InkWell(
-      onTap: () {
-        if (!isPending) {
-          Get.to(() => OrderDetailWorkerView(order: order));
-        }
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            ),
-          ],
-          border: Border(
-            left: BorderSide(color: statusColor.withOpacity(0.12), width: 6),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        ),
-        child: Stack(
-          children: [
-            // Status badge
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(16),
-                    bottomLeft: Radius.circular(12),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: isPending
+              ? null
+              : () {
+                  Get.to(() => OrderDetailWorkerView(order: order));
+                },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Header Row: Service Name & Request ID + Status Badge
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(statusIcon, color: Colors.white, size: 14),
-                    SizedBox(width: 4),
-                    Text(
-                      _getStatusText(order.status),
-                      style: GoogleFonts.cairo(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Content with action button
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 24),
-                  // Customer name and date
-                  Row(
-                    children: [
-                      Icon(Icons.person, color: AppColors.four, size: 18),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          order.fullName,
-                          style: GoogleFonts.cairo(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Icon(Icons.calendar_today, color: Colors.grey, size: 14),
-                      SizedBox(width: 4),
-                      Text(
-                        order.createdAt != null
-                            ? order.createdAt.toLocal().toString().split(' ')[0]
-                            : '',
-                        style: GoogleFonts.cairo(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  // Service
-                  Row(
-                    children: [
-                      Icon(Icons.build, color: AppColors.four, size: 16),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          '${order.serviceName} • ${order.subServiceName}',
-                          style: GoogleFonts.cairo(
-                            fontSize: 13,
-                            color: Colors.black54,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  // Description
-                  Text(
-                    order.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.cairo(
-                      fontSize: 13,
-                      color: Colors.black87,
-                      height: 1.4,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  // Bottom row: phone (hidden for pending) and action button
-                  Row(
-                    children: [
-                      if (!isPending) ...[
-                        Icon(Icons.phone, size: 14, color: AppColors.four),
-                        SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            order.phoneNumber ?? '',
-                            style: GoogleFonts.cairo(fontSize: 12),
-                          ),
-                        ),
-                      ] else
-                        Spacer(),
-                      if (isPending)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                Get.find<HomeWorkerController>().approveOrder(
-                                  order.id,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green.shade600,
-                                minimumSize: Size(56, 36),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.check, size: 16, color: Colors.white),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'قبول',
-                                    style: GoogleFonts.cairo(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        )
-                      else if (isApproved)
-                        // For approved orders show cancel button (remove from pending)
-                        OutlinedButton(
-                          onPressed: () {
-                            showConfirmDialog(
-                              title: 'تأكيد',
-                              middleText: 'هل تريد إلغاء الطلب؟',
-                              onConfirm: () async {
-                                await Get.find<HomeWorkerController>().rejectOrder(order.id);
-                              },
-                              onCancel: () {},
-                              confirmText: 'نعم',
-                              cancelText: 'لا',
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.redAccent, width: 1.5),
-                            minimumSize: Size(56, 36),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            backgroundColor: Colors.transparent,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Icon(Icons.cancel, size: 16, color: Colors.redAccent),
-                              SizedBox(width: 8),
                               Text(
-                                'إلغاء',
+                                '#${order.id}',
                                 style: GoogleFonts.cairo(
-                                  color: Colors.redAccent,
-                                  fontSize: 13,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  order.serviceName.isNotEmpty
+                                      ? order.serviceName
+                                      : 'طلب صيانة',
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF0F172A),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
-                        )
-                      else
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: AppColors.four.withOpacity(0.7),
+                          if (order.subServiceName.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              order.subServiceName,
+                              style: GoogleFonts.cairo(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Status Badge Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: statusColor.withOpacity(0.25),
                         ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: statusColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            statusText,
+                            style: GoogleFonts.cairo(
+                              color: statusColor,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // Customer info row
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        size: 14,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        order.fullName.isNotEmpty
+                            ? order.fullName
+                            : 'عميل صلحلي',
+                        style: GoogleFonts.cairo(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (order.createdAt != null) ...[
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 13,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDateTime(order.createdAt!),
+                        style: GoogleFonts.cairo(
+                          fontSize: 11.5,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+
+                // Address row if available
+                if (order.address.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 15,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          order.address,
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            color: const Color(0xFF64748B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ],
+
+                // Description Box
+                if (order.description.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                    ),
+                    child: Text(
+                      order.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        color: const Color(0xFF475569),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+
+                // Payment Status Row (if completed)
+                if (isCompleted) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: (order.isPaymentProcessed ? const Color(0xFF16A34A) : const Color(0xFFEA580C))
+                          .withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: (order.isPaymentProcessed ? const Color(0xFF16A34A) : const Color(0xFFEA580C))
+                            .withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              order.isPaymentProcessed ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+                              size: 15,
+                              color: order.isPaymentProcessed ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              order.isPaymentProcessed ? 'حالة الدفع: تم الدفع' : 'حالة الدفع: لم يتم الدفع',
+                              style: GoogleFonts.cairo(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: order.isPaymentProcessed ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (order.amountPaid != null && order.amountPaid!.isNotEmpty)
+                          Text(
+                            '${order.amountPaid} ل.س',
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 12),
+                Divider(color: Colors.grey.shade100, height: 1),
+                const SizedBox(height: 10),
+
+                // Bottom Action buttons row
+                Row(
+                  children: [
+                    if (isPending) ...[
+                      // Accept button (Full width, details hidden for unaccepted orders)
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => ctrl.approveOrder(order.id),
+                          icon: const Icon(Icons.check_circle_outline, size: 18),
+                          label: Text(
+                            'قبول الطلب',
+                            style: GoogleFonts.cairo(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF16A34A),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ] else if (isApproved) ...[
+                      // Complete/Open details button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => Get.to(() => OrderDetailWorkerView(order: order)),
+                          icon: const Icon(Icons.build_circle_outlined, size: 16),
+                          label: Text(
+                            'تفاصيل وإنهاء الطلب',
+                            style: GoogleFonts.cairo(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Cancel button
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          showConfirmDialog(
+                            title: 'إلغاء الطلب',
+                            middleText: 'هل أنت متأكد من رغبتك بإلغاء هذا الطلب؟',
+                            onConfirm: () => ctrl.rejectOrder(order.id),
+                            onCancel: () {},
+                            confirmText: 'نعم، إلغاء',
+                            cancelText: 'تراجع',
+                          );
+                        },
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: Text(
+                          'إلغاء',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFDC2626),
+                          side: const BorderSide(color: Color(0xFFFCA5A5)),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      // Completed order
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.task_alt_rounded,
+                                    size: 16,
+                                    color: Color(0xFF16A34A),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'تم إنجاز الطلب بنجاح',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF16A34A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'عرض التقرير',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  const Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 12,
+                                    color: Colors.blue,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String filter) {
+    String title = 'لا توجد طلبات حالياً';
+    String subtitle = 'ستظهر لك هنا الطلبات المسندة إليك فور ورودها';
+    if (filter == 'pending') {
+      title = 'لا توجد طلبات قيد الانتظار';
+      subtitle = 'لا توجد طلبات جديدة بانتظار الموافقة حالياً';
+    } else if (filter == 'approved') {
+      title = 'لا توجد طلبات موافق عليها';
+      subtitle = 'قم بقبول الطلبات الجديدة لتبدأ العمل عليها';
+    } else if (filter == 'completed') {
+      title = 'لا توجد طلبات مكتملة بعد';
+      subtitle = 'الطلبات المنجزة ستظهر هنا مع تفاصيل التقرير';
+    }
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.assignment_outlined,
+                    size: 40,
+                    color: Colors.blue,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.cairo(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 140,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                Container(
+                  width: 70,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: 180,
+              height: 14,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status, {bool isPaymentProcessed = false}) {
+    final s = status.toLowerCase();
+    if (s.contains('pending') || s.contains('قيد')) {
+      return const Color(0xFFD97706);
+    } else if (s.contains('approved') || s.contains('موافق')) {
+      return const Color(0xFF2563EB);
+    } else if (s.contains('completed') || s.contains('مكتمل')) {
+      return isPaymentProcessed ? const Color(0xFF16A34A) : const Color(0xFFEA580C);
+    } else if (s.contains('cancel') || s.contains('ملغ')) {
+      return const Color(0xFF64748B);
+    }
+    return Colors.blue;
+  }
+
+  String _getStatusText(String status, {bool isPaymentProcessed = false}) {
+    final s = status.toLowerCase();
+    if (s.contains('pending') || s.contains('قيد')) {
+      return 'قيد الانتظار';
+    } else if (s.contains('approved') || s.contains('موافق')) {
+      return 'موافق عليه';
+    } else if (s.contains('completed') || s.contains('مكتمل')) {
+      return isPaymentProcessed ? 'مكتمل (تم الدفع)' : 'مكتمل (لم يتم الدفع)';
+    } else if (s.contains('cancel') || s.contains('ملغ')) {
+      return 'ملغي';
+    }
+    return status;
+  }
+
+  String _formatDateTime(DateTime dt) {
+    try {
+      return DateFormat('yyyy/MM/dd - hh:mm a', 'ar').format(dt.toLocal());
+    } catch (_) {
+      try {
+        return DateFormat('yyyy-MM-dd HH:mm').format(dt.toLocal());
+      } catch (_) {
+        return dt.toString().split('.')[0];
+      }
+    }
   }
 }

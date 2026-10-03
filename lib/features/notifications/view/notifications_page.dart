@@ -58,8 +58,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
           GetBuilder<NotificationsController>(
             builder: (ctrl) {
-              if ((ctrl.homeController.isLoading && ctrl.notifications.isEmpty) || (ctrl.isLoading && ctrl.notifications.isEmpty)) {
-                return Center(child: CircularProgressIndicator(color: AppColors.four));
+              if (ctrl.isLoading && ctrl.notifications.isEmpty) {
+                return const Center(child: CircularProgressIndicator(color: Colors.blue));
               }
 
               return Padding(
@@ -104,7 +104,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                   'لا توجد إشعارات حالياً',
                                   style: GoogleFonts.cairo(
                                     fontSize: 16,
-                                    color: AppColors.four,
+                                    color: Colors.grey.shade600,
                                   ),
                                 ),
                               )
@@ -118,9 +118,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 itemCount: ctrl.notifications.length + (ctrl.isLoadingMore ? 1 : 0),
                                 itemBuilder: (context, index) {
                                   if (index == ctrl.notifications.length) {
-                                    return  Padding(
+                                    return const Padding(
                                       padding: EdgeInsets.symmetric(vertical: 16),
-                                      child: Center(child: CircularProgressIndicator(color: AppColors.four)),
+                                      child: Center(child: CircularProgressIndicator(color: Colors.blue)),
                                     );
                                   }
                                   final notification = ctrl.notifications[index];
@@ -175,7 +175,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           borderRadius: BorderRadius.circular(18),
           color: Colors.white,
           border: Border.all(
-            color: notification.isRead ? Colors.grey.withOpacity(0.15) : AppColors.four.withOpacity(0.2),
+            color: notification.isRead ? Colors.grey.withOpacity(0.15) : Colors.blue.withOpacity(0.3),
           ),
           boxShadow: [
             BoxShadow(
@@ -226,14 +226,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               Container(
                                 width: 10,
                                 height: 10,
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppColors.four,
+                                  color: Colors.blue,
                                 ),
                               ),
                           ],
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Text(
                           notification.description,
                           maxLines: 2,
@@ -244,11 +244,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             height: 1.5,
                           ),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Row(
                           children: [
                             Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade500),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
                               _formatDate(notification.createdAt),
                               style: GoogleFonts.cairo(
@@ -256,9 +256,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 color: Colors.grey.shade600,
                               ),
                             ),
-                            Spacer(),
+                            const Spacer(),
                             if (notification.type != null)
-                              Icon(Icons.chevron_right, size: 18, color: AppColors.four.withOpacity(0.8)),
+                              Icon(Icons.chevron_right, size: 18, color: Colors.blue.withOpacity(0.8)),
                           ],
                         ),
                       ],

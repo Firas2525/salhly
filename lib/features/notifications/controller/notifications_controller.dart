@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:salhly/features/home/controller/home_controller.dart';
+import 'package:salhly/features/notifications/model/notification.dart';
 import 'package:salhly/features/notifications/service/notifications_service.dart';
 
 class NotificationsController extends GetxController {
-  HomeController get homeController => Get.find<HomeController>();
   final NotificationsService _service = NotificationsService();
+
+  HomeController? get _homeController =>
+      Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
 
   bool isLoading = false;
   bool isLoadingMore = false;
@@ -14,8 +17,8 @@ class NotificationsController extends GetxController {
   final int perPage = 10;
   late final ScrollController scrollController;
 
-  List get notifications => homeController.notifications;
-  int get unreadCount => homeController.unreadNotificationsCount;
+  List<NotificationModel> notifications = [];
+  int unreadCount = 0;
   bool get hasMore => currentPage < lastPage;
 
   @override
@@ -52,14 +55,28 @@ class NotificationsController extends GetxController {
     currentPage = 1;
     lastPage = 1;
 
-    final response = await homeController.getNotifications(page: currentPage, perPage: perPage, reset: true);
-    if (response != null) {
-      currentPage = _parsePage(response.pagination['current_page'], fallback: 1);
-      lastPage = _parsePage(response.pagination['last_page'], fallback: currentPage);
-    }
+    try {
+      final response = await _service.getNotifications(page: currentPage, perPage: perPage);
+      if (response != null) {
+        notifications = response.data;
+        unreadCount = response.unreadCount;
+        currentPage = _parsePage(response.pagination['current_page'], fallback: 1);
+        lastPage = _parsePage(response.pagination['last_page'], fallback: currentPage);
 
-    isLoading = false;
-    update();
+        // Sync with HomeController if present
+        final hc = _homeController;
+        if (hc != null) {
+          hc.notifications = notifications;
+          hc.unreadNotificationsCount = unreadCount;
+          hc.update();
+        }
+      }
+    } catch (e) {
+      print('Error loading notifications: $e');
+    } finally {
+      isLoading = false;
+      update();
+    }
   }
 
   Future<void> loadMoreNotifications() async {
@@ -69,31 +86,48 @@ class NotificationsController extends GetxController {
     update();
 
     final nextPage = currentPage + 1;
-    final response = await homeController.getNotifications(page: nextPage, perPage: perPage, reset: false);
-    if (response != null) {
-      currentPage = _parsePage(response.pagination['current_page'], fallback: nextPage);
-      lastPage = _parsePage(response.pagination['last_page'], fallback: nextPage);
-    }
+    try {
+      final response = await _service.getNotifications(page: nextPage, perPage: perPage);
+      if (response != null) {
+        notifications.addAll(response.data);
+        unreadCount = response.unreadCount;
+        currentPage = _parsePage(response.pagination['current_page'], fallback: nextPage);
+        lastPage = _parsePage(response.pagination['last_page'], fallback: nextPage);
 
-    isLoadingMore = false;
-    update();
+        final hc = _homeController;
+        if (hc != null) {
+          hc.notifications = notifications;
+          hc.unreadNotificationsCount = unreadCount;
+          hc.update();
+        }
+      }
+    } catch (e) {
+      print('Error loading more notifications: $e');
+    } finally {
+      isLoadingMore = false;
+      update();
+    }
   }
 
   void markAsRead(int id) {
-    // استدعاء API بدون انتظار النتيجة
+    // Call API in background
     _service.markNotificationAsRead(id);
-    
-    // تحديث البيانات محلياً
-    final index = homeController.notifications.indexWhere((n) => n.id == id);
+
+    // Update local notifications
+    final index = notifications.indexWhere((n) => n.id == id);
     if (index != -1) {
-      final notification = homeController.notifications[index];
+      final notification = notifications[index];
       if (!notification.isRead) {
-        homeController.notifications[index] = notification.copyWith(isRead: true);
-        // تقليل عدد الإشعارات غير المقروءة بمقدار 1
-        if (homeController.unreadNotificationsCount > 0) {
-          homeController.unreadNotificationsCount--;
+        notifications[index] = notification.copyWith(isRead: true);
+        if (unreadCount > 0) {
+          unreadCount--;
         }
-        homeController.update();
+        final hc = _homeController;
+        if (hc != null) {
+          hc.notifications = notifications;
+          hc.unreadNotificationsCount = unreadCount;
+          hc.update();
+        }
         update();
       }
     }

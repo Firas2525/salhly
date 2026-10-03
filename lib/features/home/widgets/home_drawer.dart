@@ -70,6 +70,14 @@ class HomeDrawer extends StatelessWidget {
                             ),
                           ),
                           _buildTile(
+                            icon: Icons.feedback_outlined,
+                            title: 'الشكاوى والمقترحات',
+                            onTap: () {
+                              Get.back();
+                              showComplaintBottomSheet(contextTitle: 'الشكاوى والمقترحات العامة');
+                            },
+                          ),
+                          _buildTile(
                             icon: Icons.privacy_tip,
                             title: 'سياسة الخصوصية',
                             onTap: () => Get.to(() => PrivacyPolicyView()),

@@ -8,10 +8,17 @@ class MaintenanceOrderModel {
   final String description;
   final String status;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final DateTime? pendingAt;
+  final DateTime? approvedAt;
+  final DateTime? rejectedAt;
+  final DateTime? completedAt;
   final List<OrderFile>? files;
   final String? reportDescription;
   final String? amountPaid;
+  final String? repairPercentage;
   final String? workerName;
+  final int paymentProcessed;
   final List<OrderFile>? reportFiles;
 
   MaintenanceOrderModel({
@@ -23,13 +30,22 @@ class MaintenanceOrderModel {
     required this.subServiceName,
     required this.description,
     required this.status,
+    this.paymentProcessed = 0,
     this.createdAt,
+    this.updatedAt,
+    this.pendingAt,
+    this.approvedAt,
+    this.rejectedAt,
+    this.completedAt,
     this.files,
     this.reportDescription,
     this.amountPaid,
+    this.repairPercentage,
     this.workerName,
     this.reportFiles,
   });
+
+  bool get isPaymentProcessed => paymentProcessed == 1;
 
   factory MaintenanceOrderModel.fromJson(Map<String, dynamic> json) {
     // Handle service as either string or object
@@ -63,12 +79,14 @@ class MaintenanceOrderModel {
     // تقرير الإنهاء من كائن report
     String? reportDescription;
     String? amountPaid;
+    String? repairPercentage;
     String? workerName;
     List<OrderFile>? reportFiles;
     if (json['report'] != null && json['report'] is Map) {
       final report = json['report'] as Map<String, dynamic>;
       reportDescription = report['description']?.toString();
       amountPaid = report['amount_paid']?.toString();
+      repairPercentage = report['repair_percentage']?.toString();
       workerName = report['worker_name']?.toString();
       if (report['report_files'] != null && report['report_files'] is List) {
         reportFiles = (report['report_files'] as List)
@@ -80,6 +98,14 @@ class MaintenanceOrderModel {
             .toList();
       }
     }
+    repairPercentage ??= json['repair_percentage']?.toString();
+
+    int paymentProcessed = 0;
+    if (json['payment_processed'] != null) {
+      paymentProcessed = json['payment_processed'] is int
+          ? json['payment_processed']
+          : int.tryParse(json['payment_processed'].toString()) ?? 0;
+    }
 
     return MaintenanceOrderModel(
       id: json['id'] ?? 0,
@@ -90,11 +116,23 @@ class MaintenanceOrderModel {
       subServiceName: subServiceName,
       description: json['description'] ?? '',
       status: json['status'] ?? 'pending',
+      paymentProcessed: paymentProcessed,
       createdAt:
-          json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+          json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
+      updatedAt:
+          json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) : null,
+      pendingAt:
+          json['pending_at'] != null ? DateTime.tryParse(json['pending_at'].toString()) : null,
+      approvedAt:
+          json['approved_at'] != null ? DateTime.tryParse(json['approved_at'].toString()) : null,
+      rejectedAt:
+          json['rejected_at'] != null ? DateTime.tryParse(json['rejected_at'].toString()) : null,
+      completedAt:
+          json['completed_at'] != null ? DateTime.tryParse(json['completed_at'].toString()) : null,
       files: files,
       reportDescription: reportDescription,
       amountPaid: amountPaid,
+      repairPercentage: repairPercentage,
       workerName: workerName,
       reportFiles: reportFiles,
     );

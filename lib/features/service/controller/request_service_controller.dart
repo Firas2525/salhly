@@ -10,9 +10,9 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../app.dart';
-import '../../../core/utils/app_api.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../auth/view/login.dart';
+import '../../home/controller/home_controller.dart';
 import '../model/service_model.dart';
 import '../widgets/maintenance_success_dialog.dart';
 
@@ -27,8 +27,9 @@ class RequestServiceController extends GetxController {
   final TextEditingController descriptionController = TextEditingController();
 
   // Service IDs
-  late int serviceId;
+  int serviceId = 0;
   int? selectedSubServiceId;
+  bool isGolden = false;
 
   // Subservices list
   List<SubServiceModel> subServices = [];
@@ -52,50 +53,6 @@ class RequestServiceController extends GetxController {
   StreamSubscription<Duration?>? _durationSub;
   StreamSubscription<Duration>? _positionSub;
 
-  // Fetch sub-services for a service id
-  Future<void> getService(int id) async {
-    isLoading = true;
-    update();
-
-    try {
-      String? token = App.prefs.getString('token');
-      var headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-        'Accept-Language': 'ar',
-      };
-      var uri = Uri.parse("${AppApi.baseUrl}/service/get_SubService?service_id=$id");
-
-      var request = http.Request('GET', uri);
-      request.headers.addAll(headers);
-      var response = await request.send();
-      var responseBody = await response.stream.bytesToString();
-
-      if (response.statusCode == 403 || response.statusCode == 401) {
-        await App.prefs.clear();
-        Get.offAll(() => Login());
-        return;
-      }
-
-      var data = jsonDecode(responseBody);
-      final List<dynamic> dataList = data?['data'] ?? [];
-
-      if (response.statusCode == 200 ||
-          response.statusCode == 201 ||
-          response.statusCode == 210) {
-        subServices = dataList.map((e) => SubServiceModel.fromJson(e)).toList();
-      } else {
-        showAppSnackbar("خطأ", data?['message'] ?? "حدث خطأ");
-      }
-    } catch (e) {
-      print(e);
-      showAppSnackbar("خطأ", "حدث خطأ أثناء الاتصال. حاول لاحقًا.");
-    }
-
-    isLoading = false;
-    update();
-  }
-
   Future<void> seekAudio(Duration position) async {
     try {
       await _audioPlayer.seek(position);
@@ -111,11 +68,32 @@ class RequestServiceController extends GetxController {
     // allow passing via Get.arguments OR set later by the page
     if (Get.arguments != null) {
       final args = Get.arguments as Map<String, dynamic>;
-      if (args.containsKey('serviceId')) serviceId = args['serviceId'];
+      if (args.containsKey('serviceId')) serviceId = args['serviceId'] ?? 0;
       if (args.containsKey('subServiceId')) selectedSubServiceId = args['subServiceId'];
+      if (args.containsKey('isGolden')) isGolden = args['isGolden'] == true;
     }
 
+    if (!isGolden && serviceId > 0 && Get.isRegistered<HomeController>()) {
+      isGolden = Get.find<HomeController>().goldenServices.any((g) => g.id == serviceId);
+    }
+
+    autoFillUserData();
     super.onInit();
+  }
+
+  void autoFillUserData() {
+    if (Get.isRegistered<HomeController>()) {
+      final homeCtrl = Get.find<HomeController>();
+      if (homeCtrl.user != null) {
+        if (fullNameController.text.trim().isEmpty && homeCtrl.user?.name != null) {
+          fullNameController.text = homeCtrl.user!.name!;
+        }
+        if (phoneController.text.trim().isEmpty && homeCtrl.user?.phone != null) {
+          phoneController.text = homeCtrl.user!.phone!;
+        }
+        update();
+      }
+    }
   }
 
   Future<void> pickImage() async {

@@ -17,13 +17,21 @@ class SellPieceRequest {
 
   factory SellPieceRequest.fromJson(Map<String, dynamic> json) {
     return SellPieceRequest(
-      id: json['id'],
-      status: json['status'] ?? '',
-      adminNote: json['admin_note'],
-      createdAt: DateTime.parse(json['created_at']),
-      user: User.fromJson(json['user']),
-      pieces: json['pieces'] != null
-          ? (json['pieces'] as List).map((p) => SellPiece.fromJson(p)).toList()
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      status: json['status']?.toString() ?? '',
+      adminNote: json['admin_note']?.toString(),
+      createdAt: json['created_at'] != null
+          ? (DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      user: json['user'] != null && json['user'] is Map<String, dynamic>
+          ? User.fromJson(json['user'])
+          : User(id: 0, name: '', phone: ''),
+      pieces: json['pieces'] is List
+          ? (json['pieces'] as List)
+              .map((p) => SellPiece.fromJson(p))
+              .toList()
           : [],
     );
   }
@@ -42,9 +50,11 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      name: json['name'] ?? '',
-      phone: json['phone'] ?? '',
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
     );
   }
 }
@@ -53,6 +63,7 @@ class SellPiece {
   final int id;
   final String description;
   final String expectedPrice;
+  final String? currency;
   final String? voiceRecord;
   final String? voiceRecordUrl;
   final String? adminDescription;
@@ -63,6 +74,7 @@ class SellPiece {
     required this.id,
     required this.description,
     required this.expectedPrice,
+    this.currency,
     this.voiceRecord,
     this.voiceRecordUrl,
     this.adminDescription,
@@ -72,15 +84,20 @@ class SellPiece {
 
   factory SellPiece.fromJson(Map<String, dynamic> json) {
     return SellPiece(
-      id: json['id'],
-      description: json['description'] ?? '',
-      expectedPrice: json['expected_price'] ?? '',
-      voiceRecord: json['voice_record'],
-      voiceRecordUrl: json['voice_record_url'],
-      adminDescription: json['admin_description'],
-      adminExpectedPrice: json['admin_expected_price'],
-      images: json['images'] != null
-          ? (json['images'] as List).map((i) => SellPieceImage.fromJson(i)).toList()
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      description: json['description']?.toString() ?? '',
+      expectedPrice: json['expected_price']?.toString() ?? '',
+      currency: json['currency']?.toString(),
+      voiceRecord: json['voice_record']?.toString(),
+      voiceRecordUrl: json['voice_record_url']?.toString(),
+      adminDescription: json['admin_description']?.toString(),
+      adminExpectedPrice: json['admin_expected_price']?.toString(),
+      images: json['images'] is List
+          ? (json['images'] as List)
+              .map((i) => SellPieceImage.fromJson(i))
+              .toList()
           : [],
     );
   }
@@ -99,9 +116,11 @@ class SellPieceImage {
 
   factory SellPieceImage.fromJson(Map<String, dynamic> json) {
     return SellPieceImage(
-      id: json['id'],
-      image: json['image'] ?? '',
-      imageUrl: json['image_url'] ?? '',
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      image: json['image']?.toString() ?? '',
+      imageUrl: json['image_url']?.toString() ?? '',
     );
   }
 }

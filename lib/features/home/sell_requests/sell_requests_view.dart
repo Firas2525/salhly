@@ -358,7 +358,7 @@ class _SellRequestsViewState extends State<SellRequestsView> {
                                                 ),
                                                 SizedBox(width: 5),
                                                 Text(
-                                                  'السعر المتوقع: ${piece.expectedPrice}',
+                                                  'السعر المتوقع: ${piece.expectedPrice} ${piece.currency == 'USD' ? '\$' : 'ل.س'}',
                                                   style:
                                                       GoogleFonts.cairo(
                                                         fontSize: 13,

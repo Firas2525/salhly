@@ -7,10 +7,32 @@ import 'package:salhly/features/home/view/home_navigation_view.dart';
 import 'package:salhly/features/requests/view/requests_view.dart';
 
 class MaintenanceSuccessDialog extends StatefulWidget {
-  const MaintenanceSuccessDialog({super.key});
+  final String? tagText;
+  final String? title;
+  final String? subtitle;
+  final String? bannerTitle;
+  final String? bannerHeader;
+  final String? bannerDesc;
+  final String? primaryButtonText;
+  final VoidCallback? onPrimaryPressed;
+  final VoidCallback? onHomePressed;
+
+  const MaintenanceSuccessDialog({
+    super.key,
+    this.tagText,
+    this.title,
+    this.subtitle,
+    this.bannerTitle,
+    this.bannerHeader,
+    this.bannerDesc,
+    this.primaryButtonText,
+    this.onPrimaryPressed,
+    this.onHomePressed,
+  });
 
   @override
-  State<MaintenanceSuccessDialog> createState() => _MaintenanceSuccessDialogState();
+  State<MaintenanceSuccessDialog> createState() =>
+      _MaintenanceSuccessDialogState();
 }
 
 class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
@@ -58,6 +80,16 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
 
   @override
   Widget build(BuildContext context) {
+    final tag = widget.tagText ?? 'تم إرسال الطلب بنجاح';
+    final mainTitle = widget.title ?? 'شكراً لاختيارك صلحلي';
+    final mainSubtitle = widget.subtitle ??
+        'طلب الصيانة قيد المراجعة والمتابعة من قبل فريقنا الفني المتخصص.';
+    final bTitle = widget.bannerTitle ?? 'لا تنسَ!';
+    final bHeader = widget.bannerHeader ?? 'عمليات الصيانة مكفولة من صلحلي 🛡️';
+    final bDesc = widget.bannerDesc ??
+        'نضمن لك جودة العمل وأعلى معايير الصيانة لراحة بالك.';
+    final primaryBtn = widget.primaryButtonText ?? 'متابعة الطلب';
+
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
       child: Center(
@@ -83,12 +115,12 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F172A).withOpacity(0.15),
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.15),
                         blurRadius: 36,
                         offset: const Offset(0, 16),
                       ),
                       BoxShadow(
-                        color: Colors.blue.withOpacity(0.15),
+                        color: Colors.blue.withValues(alpha: 0.15),
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
@@ -107,7 +139,8 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                           color: const Color(0xFFECFDF5),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: const Color(0xFF10B981).withOpacity(0.35),
+                            color: const Color(0xFF10B981)
+                                .withValues(alpha: 0.35),
                           ),
                         ),
                         child: Row(
@@ -120,7 +153,7 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'تم إرسال الطلب بنجاح',
+                              tag,
                               style: GoogleFonts.cairo(
                                 color: const Color(0xFF047857),
                                 fontSize: 13,
@@ -134,7 +167,7 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
 
                       // Title
                       Text(
-                        'شكراً لاختيارك صلحلي',
+                        mainTitle,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.cairo(
                           fontSize: 20,
@@ -145,7 +178,7 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                       const SizedBox(height: 6),
 
                       Text(
-                        'طلب الصيانة قيد المراجعة والمتابعة من قبل فريقنا الفني المتخصص.',
+                        mainSubtitle,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.cairo(
                           fontSize: 13,
@@ -155,7 +188,7 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                       ),
                       const SizedBox(height: 18),
 
-                      // --- Creative Guarantee Box (مكفولة من صلحلي) ---
+                      // --- Creative Info Box ---
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -169,12 +202,14 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                           ),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: const Color(0xFF3B82F6).withOpacity(0.4),
+                            color: const Color(0xFF3B82F6)
+                                .withValues(alpha: 0.4),
                             width: 1.2,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF3B82F6).withOpacity(0.08),
+                              color: const Color(0xFF3B82F6)
+                                  .withValues(alpha: 0.08),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -182,7 +217,6 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                         ),
                         child: Row(
                           children: [
-                            // Gold & Sapphire Shield Icon
                             Container(
                               width: 46,
                               height: 46,
@@ -198,7 +232,8 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF2563EB).withOpacity(0.35),
+                                    color: const Color(0xFF2563EB)
+                                        .withValues(alpha: 0.35),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -218,7 +253,7 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'لا تنسَ!',
+                                    bTitle,
                                     style: GoogleFonts.cairo(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
@@ -226,7 +261,7 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                                     ),
                                   ),
                                   Text(
-                                    'عمليات الصيانة مكفولة من صلحلي 🛡️',
+                                    bHeader,
                                     style: GoogleFonts.cairo(
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w900,
@@ -236,7 +271,7 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'نضمن لك جودة العمل وأعلى معايير الصيانة لراحة بالك.',
+                                    bDesc,
                                     style: GoogleFonts.cairo(
                                       fontSize: 11,
                                       color: const Color(0xFF3B82F6),
@@ -255,26 +290,29 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                       // Action Buttons
                       Row(
                         children: [
-                          // Go to requests
+                          // Go to requests / Primary action
                           Expanded(
                             flex: 3,
                             child: ElevatedButton(
-                              onPressed: () {
-                                Get.back(); // close dialog
-                                Get.to(() => const RequestsView());
-                              },
+                              onPressed: widget.onPrimaryPressed ??
+                                  () {
+                                    Get.back(); // close dialog
+                                    Get.to(() => const RequestsView());
+                                  },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
                                 foregroundColor: Colors.white,
                                 elevation: 3,
-                                shadowColor: Colors.blue.withOpacity(0.4),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shadowColor:
+                                    Colors.blue.withValues(alpha: 0.4),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
                               child: Text(
-                                'متابعة الطلب',
+                                primaryBtn,
                                 style: GoogleFonts.cairo(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
@@ -287,16 +325,18 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                           Expanded(
                             flex: 2,
                             child: OutlinedButton(
-                              onPressed: () {
-                                Get.offAll(() => const HomeNavigationView());
-                              },
+                              onPressed: widget.onHomePressed ??
+                                  () {
+                                    Get.offAll(() => const HomeNavigationView());
+                                  },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFF475569),
                                 side: const BorderSide(
                                   color: Color(0xFFCBD5E1),
                                   width: 1.2,
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -320,7 +360,8 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                 Positioned(
                   top: 0,
                   child: AnimatedBuilder(
-                    animation: Listenable.merge([_pulseController, _rotateController]),
+                    animation: Listenable.merge(
+                        [_pulseController, _rotateController]),
                     builder: (context, child) {
                       final pulseVal = _pulseController.value;
                       return SizedBox(
@@ -337,8 +378,8 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                                 height: 85,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.blue.withOpacity(
-                                    (1.0 - pulseVal) * 0.25,
+                                  color: Colors.blue.withValues(
+                                    alpha: (1.0 - pulseVal) * 0.25,
                                   ),
                                 ),
                               ),
@@ -351,8 +392,8 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                                 height: 85,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: const Color(0xFF10B981).withOpacity(
-                                    (1.0 - pulseVal) * 0.35,
+                                  color: const Color(0xFF10B981).withValues(
+                                    alpha: (1.0 - pulseVal) * 0.35,
                                   ),
                                 ),
                               ),
@@ -368,9 +409,10 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                                   gradient: SweepGradient(
                                     colors: [
                                       Colors.transparent,
-                                      Colors.blue.withOpacity(0.3),
+                                      Colors.blue.withValues(alpha: 0.3),
                                       Colors.transparent,
-                                      const Color(0xFF10B981).withOpacity(0.3),
+                                      const Color(0xFF10B981)
+                                          .withValues(alpha: 0.3),
                                       Colors.transparent,
                                     ],
                                   ),
@@ -397,7 +439,7 @@ class _MaintenanceSuccessDialogState extends State<MaintenanceSuccessDialog>
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.blue.withOpacity(0.45),
+                                    color: Colors.blue.withValues(alpha: 0.45),
                                     blurRadius: 18,
                                     offset: const Offset(0, 8),
                                   ),

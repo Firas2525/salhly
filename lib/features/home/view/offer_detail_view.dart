@@ -283,7 +283,7 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                                         ],
                                       ),
                                       child: const Text(
-                                        'تم البيع',
+                                        'عرض',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,

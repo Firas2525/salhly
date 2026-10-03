@@ -175,80 +175,7 @@ class _AllOffersViewState extends State<AllOffersView> {
                             ),
                           ),
                         ),
-                  actions: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                          child: Material(
-                            color: Colors.white.withOpacity(0.18),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () =>
-                                  Get.to(() => const NotificationsPage()),
-                              child: Container(
-                                width: 42,
-                                height: 42,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                  ),
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.notifications_rounded,
-                                      color: Colors.white,
-                                      size: 22,
-                                    ),
-                                    if (homeCtrl.unreadNotificationsCount > 0)
-                                      Positioned(
-                                        top: 6,
-                                        right: 6,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(3),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEF4444),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                          constraints: const BoxConstraints(
-                                            minWidth: 16,
-                                            minHeight: 16,
-                                          ),
-                                          child: Text(
-                                            homeCtrl.unreadNotificationsCount >
-                                                    99
-                                                ? '99+'
-                                                : '${homeCtrl.unreadNotificationsCount}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 8,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  actions: const [],
                 ),
 
                 // 2. Search & Filter Bar Section below Header
@@ -394,7 +321,7 @@ class _AllOffersViewState extends State<AllOffersView> {
                         crossAxisCount: 2,
                         mainAxisSpacing: 14,
                         crossAxisSpacing: 12,
-                        mainAxisExtent: 238,
+                        mainAxisExtent: 210,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -683,13 +610,13 @@ class _GeniusVibrantOfferCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
-                                  Icons.lock_rounded,
+                                  Icons.local_offer_rounded,
                                   color: Colors.white,
                                   size: 10,
                                 ),
                                 const SizedBox(width: 2.5),
                                 Text(
-                                  'تم البيع',
+                                  'عرض',
                                   style: GoogleFonts.cairo(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -822,32 +749,6 @@ class _GeniusVibrantOfferCard extends StatelessWidget {
                               ),
                             ],
                           ),
-
-                          // Old Struck-through Price (if present)
-                          if (offer.oldPrice.isNotEmpty &&
-                              offer.oldPrice.trim() != offer.newPrice.trim()) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.price_change_outlined,
-                                  size: 13,
-                                  color: Colors.red.shade400,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  offer.oldPrice,
-                                  style: GoogleFonts.cairo(
-                                    color: Colors.grey.shade500,
-                                    decoration: TextDecoration.lineThrough,
-                                    decorationColor: Colors.red.shade400,
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                         ],
                       ),
 

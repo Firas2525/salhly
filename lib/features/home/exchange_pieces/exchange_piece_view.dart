@@ -1,22 +1,25 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:salhly/configs/app_colors.dart';
-import 'package:salhly/core/utils/ui_utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'dart:convert';
-import 'package:record/record.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../../app.dart';
+import '../../../core/utils/ui_utils.dart';
+import '../../service/widgets/maintenance_success_dialog.dart';
 import '../controller/home_controller.dart';
+import '../exchange_requests/exchange_requests_view.dart';
+import '../view/home_navigation_view.dart';
 
 class ExchangePieceView extends StatefulWidget {
   const ExchangePieceView({super.key});
@@ -30,7 +33,7 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
   final TextEditingController _pieceName = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  List<File> _images = [];
+  final List<File> _images = [];
   bool _isLoading = false;
 
   // Audio recording & playback
@@ -39,15 +42,28 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
   String? audioFilePath;
   bool isRecording = false;
   bool isPlaying = false;
-  // recording timer
+
+  // Recording timer
   Duration recordingDuration = Duration.zero;
   Timer? _recordTimer;
 
-  // playback tracking
+  // Playback tracking
   Duration playbackDuration = Duration.zero;
   Duration playbackPosition = Duration.zero;
   StreamSubscription<Duration?>? _durationSub;
   StreamSubscription<Duration>? _positionSub;
+
+  @override
+  void dispose() {
+    _pieceName.dispose();
+    _descriptionController.dispose();
+    _recordTimer?.cancel();
+    _durationSub?.cancel();
+    _positionSub?.cancel();
+    _audioPlayer.dispose();
+    _recorder.dispose();
+    super.dispose();
+  }
 
   void _removeImage(int index) {
     if (index >= 0 && index < _images.length) {
@@ -61,30 +77,42 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
     final picker = ImagePicker();
     final source = await Get.bottomSheet<ImageSource?>(
       Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
         ),
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.black87),
-              title: const Text('التصوير بالكاميرا'),
+              leading: const Icon(Icons.camera_alt_outlined, color: Colors.blue),
+              title: Text(
+                'التقاط صورة بالكاميرا',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+              ),
               onTap: () => Get.back(result: ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.black87),
-              title: const Text('اختيار من المعرض'),
+              leading: const Icon(Icons.photo_library_outlined, color: Colors.blue),
+              title: Text(
+                'اختيار من المعرض',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+              ),
               onTap: () => Get.back(result: ImageSource.gallery),
             ),
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.close, color: Colors.redAccent),
-              title: const Text('إلغاء', style: TextStyle(color: Colors.redAccent)),
+              title: Text(
+                'إلغاء',
+                style: GoogleFonts.cairo(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               onTap: () => Get.back(result: null),
             ),
           ],
@@ -98,7 +126,7 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
 
     if (source == ImageSource.gallery) {
       final pickedFiles = await picker.pickMultiImage();
-      if (pickedFiles != null) {
+      if (pickedFiles.isNotEmpty) {
         setState(() {
           _images.addAll(pickedFiles.map((e) => File(e.path)));
         });
@@ -139,9 +167,7 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
         });
       });
       setState(() {});
-    } catch (e, st) {
-      print('startRecording error: $e');
-      print(st);
+    } catch (e) {
       showAppSnackbar('خطأ', 'فشل بدء التسجيل');
     }
   }
@@ -156,9 +182,7 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
         audioFilePath = path;
       }
       setState(() {});
-    } catch (e, st) {
-      print('stopRecording error: $e');
-      print(st);
+    } catch (e) {
       showAppSnackbar('خطأ', 'فشل إيقاف التسجيل');
     }
   }
@@ -191,9 +215,7 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
       });
 
       await _audioPlayer.play(DeviceFileSource(audioFilePath!));
-    } catch (e, st) {
-      print('playAudio error: $e');
-      print(st);
+    } catch (e) {
       isPlaying = false;
       setState(() {});
       showAppSnackbar('خطأ', 'فشل تشغيل الملف الصوتي');
@@ -206,30 +228,50 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
       isPlaying = false;
       playbackPosition = Duration.zero;
       setState(() {});
-    } catch (e, st) {
-      print('stopAudio error: $e');
-      print(st);
-    }
+    } catch (_) {}
   }
 
-  Future<void> seekAudio(Duration position) async {
-    try {
-      await _audioPlayer.seek(position);
-      playbackPosition = position;
-      setState(() {});
-    } catch (e, st) {
-      print('seekAudio error: $e');
-      print(st);
-    }
+  void deleteAudio() {
+    stopAudio();
+    setState(() {
+      audioFilePath = null;
+      playbackPosition = Duration.zero;
+      playbackDuration = Duration.zero;
+      recordingDuration = Duration.zero;
+    });
   }
 
   String get recordingDurationStr {
     final minutes = recordingDuration.inMinutes.toString().padLeft(2, '0');
-    final seconds = (recordingDuration.inSeconds % 60).toString().padLeft(
-      2,
-      '0',
-    );
+    final seconds = (recordingDuration.inSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+
+  String _formatDuration(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  String get _whatsappNumber {
+    if (Get.isRegistered<HomeController>()) {
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
+    }
+    return '';
+  }
+
+  Future<void> _openWhatsApp() async {
+    final wa = _whatsappNumber.replaceAll(RegExp(r'[\s\-\(\)+]'), '');
+    if (wa.isEmpty) {
+      showAppSnackbar('تنبيه', 'رقم الواتساب غير متوفر حالياً');
+      return;
+    }
+    final uri = Uri.parse('https://wa.me/$wa');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      showAppSnackbar('خطأ', 'تعذر فتح تطبيق الواتساب', isError: true);
+    }
   }
 
   Future<void> _submitForm() async {
@@ -238,7 +280,7 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
     }
 
     if (!_formKey.currentState!.validate()) {
-      if (_pieceName.text.isEmpty) {
+      if (_pieceName.text.trim().isEmpty) {
         showAppSnackbar('تحقق', 'يرجى إدخال اسم القطعة', isError: true);
         return;
       } else {
@@ -248,7 +290,11 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
     }
 
     if (_images.isEmpty) {
-      showAppSnackbar('تحقق', 'يرجى إضافة صورة واحدة على الأقل قبل الإرسال', isError: true);
+      showAppSnackbar(
+        'تحقق',
+        'يرجى إضافة صورة واحدة على الأقل قبل الإرسال',
+        isError: true,
+      );
       return;
     }
 
@@ -264,19 +310,17 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
         ),
       );
 
-      // Add headers
       String? token = App.prefs.getString('token');
       request.headers.addAll({
         'Accept': 'application/json',
         'Accept-Language': 'en',
-        'Authorization': 'Bearer $token',
+        if (token != null) 'Authorization': 'Bearer $token',
       });
 
-      // Add form data
-      request.fields['pieces[0]'] = _pieceName.text;
-      request.fields['pieces[0][description]'] = _descriptionController.text;
+      request.fields['pieces[0]'] = _pieceName.text.trim();
+      request.fields['pieces[0][description]'] = _descriptionController.text.trim();
 
-      // Add audio file
+      // Audio
       if (audioFilePath != null) {
         final audioFile = File(audioFilePath!);
         if (await audioFile.exists()) {
@@ -288,12 +332,10 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
               contentType: MediaType('audio', 'm4a'),
             ),
           );
-        } else {
-          print('Audio file does not exist: $audioFilePath');
         }
       }
 
-      // Add images
+      // Images
       for (int i = 0; i < _images.length; i++) {
         final imageFile = _images[i];
         if (await imageFile.exists()) {
@@ -309,13 +351,50 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
 
       var response = await request.send();
       var responseData = await response.stream.bytesToString();
-      var data = jsonDecode(responseData);
-      final successMessage = data['message'] ?? 'تم إرسال طلب الاستبدال بنجاح';
+
+      dynamic data;
+      try {
+        data = jsonDecode(responseData);
+      } catch (_) {
+        showAppSnackbar(
+          'خطأ',
+          'استجابة غير متوقعة من الخادم.',
+          isError: true,
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        showAppSnackbar('نجح', successMessage);
-        await Future.delayed(const Duration(seconds: 3));
-        Get.back();
+        _pieceName.clear();
+        _descriptionController.clear();
+        _images.clear();
+        deleteAudio();
+        setState(() => _isLoading = false);
+
+        Get.dialog(
+          MaintenanceSuccessDialog(
+            tagText: 'تم استلام طلب الاستبدال',
+            title: 'شكراً لاختيارك صلحلي',
+            subtitle:
+                'طلبك قيد المراجعة والتقييم، وسيتم التواصل معك بالقطعة البديلة وفارق التكلفة.',
+            bannerTitle: 'استبدال فوري وضمان',
+            bannerHeader: 'قطع بديلة مفحوصة ومضمونة 🔄',
+            bannerDesc:
+                'نضمن لك فحص القطعة الجديدة والتأكد من مطابقتها التامة لراحتك.',
+            primaryButtonText: 'طلبات الاستبدال',
+            onPrimaryPressed: () {
+              Get.back(); // close dialog
+              Get.back(); // exit ExchangePieceView
+              Get.to(() => const ExchangeRequestsView());
+            },
+            onHomePressed: () {
+              Get.offAll(() => const HomeNavigationView());
+            },
+          ),
+          barrierDismissible: false,
+        );
+        return;
       } else {
         showAppSnackbar(
           'خطأ',
@@ -325,706 +404,768 @@ class _ExchangePieceViewState extends State<ExchangePieceView> {
       }
     } catch (e) {
       showAppSnackbar('خطأ', 'حدث خطأ أثناء الإرسال', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  String get _whatsappNumber {
-    if (Get.isRegistered<HomeController>()) {
-      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
-    }
-    return '';
-  }
-
-  String _normalizeWhatsAppNumber(String raw) {
-    var s = raw.replaceAll(RegExp(r'[\s\-\(\)+]'), '');
-    if (s.startsWith('00')) s = s.substring(2);
-    if (s.startsWith('0')) s = s.substring(1);
-    if (!s.startsWith('963')) s = '963$s';
-    return s;
-  }
-
-  Future<void> _openWhatsApp() async {
-    final rawWa = _whatsappNumber;
-    final wa = _normalizeWhatsAppNumber(rawWa);
-    if (wa.isEmpty) return;
-
-    showConfirmDialog(
-      title: 'تواصل على واتس اب',
-      middleText: 'هل تريد الانتقال إلى واتساب للتواصل؟',
-      confirmText: 'موافق',
-      cancelText: 'إلغاء',
-      onConfirm: () async {
-        final whatsappUri = Uri.parse('whatsapp://send?phone=$wa');
-        final waMeUri = Uri.parse('https://wa.me/$wa');
-        final apiUri = Uri.parse('https://api.whatsapp.com/send?phone=$wa');
-
-        try {
-          await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
-          return;
-        } catch (_) {}
-
-        try {
-          await launchUrl(waMeUri, mode: LaunchMode.externalApplication);
-          return;
-        } catch (_) {}
-
-        try {
-          await launchUrl(apiUri, mode: LaunchMode.externalApplication);
-          return;
-        } catch (_) {}
-
-        showAppSnackbar('خطأ', 'تعذر فتح واتساب', isError: true);
-      },
-      onCancel: () {},
-    );
-  }
-
-  @override
-  void dispose() {
-    _pieceName.dispose();
-    _descriptionController.dispose();
-    _recordTimer?.cancel();
-    _durationSub?.cancel();
-    _positionSub?.cancel();
-    _audioPlayer.dispose();
-    _recorder.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final mainColor = AppColors.four;
+    const primaryColor = Colors.blue;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: primaryColor,
+        title: Text(
+          'استبدل قطعتك',
+          style: GoogleFonts.cairo(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 17.5,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: Stack(
         children: [
-          Positioned.fill(child: Container(color: Colors.white)),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.35,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.blue,
-                    Colors.blue.withOpacity(0.55),
-                    Colors.white,
-                  ],
-                  stops: const [0.0, 0.6, 1.0],
-                ),
-              ),
-            ),
-          ),
           SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 40),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'استبدل قطعتك',
-                        style: GoogleFonts.cairo(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 35),
-
-                  Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(25),
-                          child: Image(
-                            image: AssetImage('assets/images/12.jpg'),
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25),
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.four.withOpacity(0.6),
-                                AppColors.four,
-                              ],
-                            ),
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 20),
-                            Container(
-                              margin: EdgeInsets.only(right: 15),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(25),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                  width: 0.8,
-                                ),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.white.withOpacity(0.1),
-                                    Colors.white.withOpacity(0.2),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(25),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                    sigmaX: 10,
-                                    sigmaY: 10,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 7,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.swap_horiz,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                        SizedBox(width: 5),
-                                        Text(
-                                          "استبدل قطعتك بسهولة",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 5),
-                            Padding(
-                              padding: EdgeInsets.only(left: 20, right: 20),
-                              child: Text(
-                                "املأ البيانات وأرفق صور وتسجيل صوتي إن أمكن",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 15),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Personal info card
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'البيانات الأساسية',
-                            style: GoogleFonts.cairo(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _pieceName,
-                            decoration: InputDecoration(
-                              labelText: 'اسم القطعة',
-                              prefixIcon: Icon(
-                                Icons.inventory,
-                                color: AppColors.four,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.four.withOpacity(0.04),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: AppColors.four),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value?.isEmpty ?? true) {
-                                return 'يرجى إدخال اسم القطعة';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
+                  // 1. Top Banner
+                  _buildTopBanner(primaryColor),
                   const SizedBox(height: 14),
 
-                  // Details card
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 1,
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'تفاصيل إضافية',
-                            style: GoogleFonts.cairo(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                  // 2. Item Info Card
+                  _buildBasicInfoCard(primaryColor),
+                  const SizedBox(height: 14),
 
-                          // Combined Images & Audio Card
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 3,
-                                        crossAxisSpacing: 8,
-                                        mainAxisSpacing: 8,
-                                      ),
-                                  itemCount: _images.length + 1,
-                                  itemBuilder: (context, index) {
-                                    // Add Image Button
-                                    if (index == _images.length) {
-                                      return GestureDetector(
-                                        onTap: _pickImages,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                              color: AppColors.four.withOpacity(
-                                                0.5,
-                                              ),
-                                              width: 2,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.add_photo_alternate,
-                                                color: AppColors.four,
-                                                size: 32,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'اضافة صورة',
-                                                style: GoogleFonts.cairo(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.four,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }
+                  // 3. Description Card
+                  _buildDescriptionCard(primaryColor),
+                  const SizedBox(height: 14),
 
-                                    // Image Card with Delete Button
-                                    return Stack(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          child: Image.file(
-                                            _images[index],
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            height: double.infinity,
-                                          ),
-                                        ),
-                                        Positioned(
-                                          top: 4,
-                                          right: 4,
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              _removeImage(index);
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.red.withOpacity(
-                                                  0.9,
-                                                ),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.2),
-                                                    blurRadius: 4,
-                                                  ),
-                                                ],
-                                              ),
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(
-                                                  4.0,
-                                                ),
-                                                child: Icon(
-                                                  Icons.close,
-                                                  color: Colors.white,
-                                                  size: 14,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
+                  // 4. Attachments Card
+                  _buildAttachmentsCard(primaryColor),
+                  const SizedBox(height: 14),
 
-                          const SizedBox(height: 12),
-                          // Audio Recording Section within the same card
-                          Text(
-                            'تسجيل صوتي (اختياري)',
-                            style: GoogleFonts.cairo(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
+                  // 5. Notice Card
+                  _buildNoticeCard(primaryColor),
+                  const SizedBox(height: 20),
 
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: isRecording ? stopRecording : startRecording,
-                                    child: Container(
-                                      width: 72,
-                                      height: 72,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: mainColor.withOpacity(0.5),
-                                          width: 2,
-                                        ),
-                                        color: isRecording ? Colors.red.withOpacity(0.1) : Colors.grey.shade100,
-                                      ),
-                                      child: Center(
-                                        child: Icon(
-                                          isRecording ? Icons.stop : Icons.mic,
-                                          size: 28,
-                                          color: isRecording ? Colors.red : mainColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (!isRecording && audioFilePath != null) ...[
-                                    const SizedBox(width: 10),
-                                    Stack(
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        Container(
-                                          width: 72,
-                                          height: 72,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(12),
-                                            color: Colors.grey.shade100,
-                                            border: Border.all(
-                                              color: mainColor.withOpacity(0.5),
-                                              width: 2,
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: IconButton(
-                                              onPressed: isPlaying ? stopAudio : playAudio,
-                                              icon: Icon(
-                                                isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
-                                                color: mainColor,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          top: -6,
-                                          right: -6,
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                audioFilePath = null;
-                                                isPlaying = false;
-                                                playbackPosition = Duration.zero;
-                                                playbackDuration = Duration.zero;
-                                              });
-                                            },
-                                            child: Container(
-                                              width: 28,
-                                              height: 28,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.red,
-                                                border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 1.5,
-                                                ),
-                                              ),
-                                              child: const Icon(
-                                                Icons.close,
-                                                size: 16,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                isRecording
-                                    ? 'جاري التسجيل: $recordingDurationStr'
-                                    : audioFilePath != null
-                                        ? 'مدة التسجيل: $recordingDurationStr'
-                                        : 'اضغط على الميكروفون لتسجيل صوت',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _descriptionController,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              hintText: 'اكتب وصفاً قصيراً للقطعة...',
-                              prefixIcon: Icon(
-                                Icons.note,
-                                color: AppColors.four,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.four.withOpacity(0.04),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: AppColors.four),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          mainColor.withOpacity(0.97),
-                          mainColor.withOpacity(0.80),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: mainColor.withOpacity(0.13),
-                          blurRadius: 10,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white24,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'ملاحظة',
-                                style: GoogleFonts.cairo(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'عند الوصف بشكل دقيق و ارفاق صورة و صوت يمكننا تقدير السعر بشكل أفضل',
-                                style: GoogleFonts.cairo(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Submit button
-                  Center(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submitForm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: mainColor,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          _isLoading ? 'جارٍ الإرسال...' : 'إرسال الطلب',
-                          style: GoogleFonts.cairo(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      'أو',
-                      style: GoogleFonts.cairo(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ),
+                  // 6. Submit Button
+                  _buildSubmitButton(primaryColor),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _openWhatsApp,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: Text(
-                        'تواصل على واتس اب',
-                        style: GoogleFonts.cairo(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+
+                  // 7. WhatsApp Button
+                  _buildWhatsAppButton(),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
           ),
 
-
-        ],
-      ),
-            )),
+          // Loading Overlay
           if (_isLoading)
             Container(
-              color: Colors.black26,
+              color: Colors.black.withValues(alpha: 0.35),
               child: Center(
-                child: CircularProgressIndicator(color: AppColors.four),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 22,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 16,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(color: primaryColor),
+                      const SizedBox(height: 16),
+                      Text(
+                        'جارٍ إرسال طلب الاستبدال...',
+                        style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-        ]
-      ));
+        ],
+      ),
+    );
+  }
+
+  // 1. Top Summary Banner
+  Widget _buildTopBanner(Color primaryColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.swap_horiz_rounded,
+              color: primaryColor,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'استبدل قطعتك بسهولة',
+                  style: GoogleFonts.cairo(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                Text(
+                  'استبدل قطعتك القديمة بقطعة جديدة مع تقييم الفارق ودفع الفرق فقط',
+                  style: GoogleFonts.cairo(
+                    fontSize: 11.5,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 2. Basic Info Card
+  Widget _buildBasicInfoCard(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                color: primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'بيانات القطعة المراد استبدالها',
+                style: GoogleFonts.cairo(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Name Input
+          _buildInputField(
+            controller: _pieceName,
+            label: 'اسم ونوع القطعة الحالية',
+            hint: 'مثال: كمبروسر 2 طن، بوردة ثلاجة...',
+            icon: Icons.sync_alt_rounded,
+            primaryColor: primaryColor,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'يرجى إدخال اسم القطعة'
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. Problem / Item Description Card
+  Widget _buildDescriptionCard(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.description_outlined,
+                color: primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'تفاصيل القطعة والقطعة المطلوبة بدلها',
+                style: GoogleFonts.cairo(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _descriptionController,
+            maxLines: 3,
+            style: GoogleFonts.cairo(fontSize: 13.5),
+            decoration: InputDecoration(
+              hintText: 'اذكر حالة قطعتك الحالية وما هي القطعة أو المواصفات التي ترغب بالحصول عليها...',
+              hintStyle: GoogleFonts.cairo(
+                fontSize: 12.5,
+                color: Colors.grey.shade400,
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              contentPadding: const EdgeInsets.all(12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: primaryColor, width: 1.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. Attachments Card
+  Widget _buildAttachmentsCard(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Photos Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.photo_camera_back_outlined,
+                    color: primaryColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'صور القطعة',
+                    style: GoogleFonts.cairo(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              if (_images.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${_images.length} صور',
+                    style: GoogleFonts.cairo(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Photos Grid
+          SizedBox(
+            height: 75,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: _images.length + 1,
+              itemBuilder: (context, index) {
+                if (index == _images.length) {
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      _pickImages();
+                    },
+                    child: Container(
+                      width: 75,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            color: primaryColor,
+                            size: 24,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'إضافة صورة',
+                            style: GoogleFonts.cairo(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final file = _images[index];
+                return Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          file,
+                          width: 75,
+                          height: 75,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 3,
+                        right: 3,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 18),
+          Divider(color: Colors.grey.shade100, height: 1),
+          const SizedBox(height: 14),
+
+          // Audio Header
+          Row(
+            children: [
+              Icon(
+                Icons.mic_none_rounded,
+                color: primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'تسجيل صوتي (اختياري)',
+                style: GoogleFonts.cairo(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Audio Controls
+          if (audioFilePath != null && !isRecording)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: isPlaying ? stopAudio : playAudio,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'تم حفظ التسجيل الصوتي',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        Text(
+                          isPlaying
+                              ? '${_formatDuration(playbackPosition)} / ${_formatDuration(playbackDuration)}'
+                              : 'جاهز للإرسال مع الطلب',
+                          style: GoogleFonts.cairo(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: deleteAudio,
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                isRecording ? stopRecording() : startRecording();
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isRecording
+                      ? const Color(0xFFFEE2E2)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isRecording
+                        ? Colors.redAccent
+                        : primaryColor.withValues(alpha: 0.35),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isRecording
+                          ? Icons.stop_circle_rounded
+                          : Icons.mic_rounded,
+                      color: isRecording ? Colors.redAccent : primaryColor,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isRecording
+                          ? 'جارٍ التسجيل: $recordingDurationStr (اضغط للإيقاف)'
+                          : 'اضغط لتسجيل صوتي يشرح طلب الاستبدال بدقة',
+                      style: GoogleFonts.cairo(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: isRecording
+                            ? Colors.redAccent
+                            : primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 5. Reassurance Notice Card
+  Widget _buildNoticeCard(Color primaryColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            color: primaryColor,
+            size: 22,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'عند الوصف بشكل دقيق وإرفاق صور واضحة وتسجيل صوتي، يمكننا تقدير فارق السعر والتواصل معك بشكل أسرع.',
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                color: const Color(0xFF1E40AF),
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 6. Submit Button
+  Widget _buildSubmitButton(Color primaryColor) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isLoading
+            ? null
+            : () {
+                HapticFeedback.heavyImpact();
+                _submitForm();
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 2,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.send_rounded, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              'إرسال طلب الاستبدال',
+              style: GoogleFonts.cairo(
+                fontSize: 15.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 7. WhatsApp Button
+  Widget _buildWhatsAppButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton(
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          _openWhatsApp();
+        },
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          backgroundColor: const Color(0xFF25D366).withValues(alpha: 0.06),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: Color(0xFF16A34A),
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'تواصل عبر واتساب للتفاوض المباشر',
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF16A34A),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required Color primaryColor,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          validator: validator,
+          style: GoogleFonts.cairo(fontSize: 13.5),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.cairo(
+              fontSize: 12.5,
+              color: Colors.grey.shade400,
+            ),
+            prefixIcon: Icon(icon, color: primaryColor, size: 20),
+            filled: true,
+            fillColor: const Color(0xFFF8FAFC),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -220,7 +220,7 @@ class _ExchangePieceDetailViewState extends State<ExchangePieceDetailView> {
     await dialPhoneNumber(phone);
   }
 
-  Widget _buildContactSection() {
+  Widget _buildContactSection({String? title}) {
     final hasPhone = _phoneNumber.isNotEmpty;
     final hasWhatsApp = _whatsappNumber.isNotEmpty;
     return Container(
@@ -237,7 +237,7 @@ class _ExchangePieceDetailViewState extends State<ExchangePieceDetailView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'إذا أعجبك أحد العروض تواصل معنا',
+            title ?? 'إذا أعجبك أحد العروض تواصل معنا',
             style: GoogleFonts.cairo(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -660,6 +660,51 @@ class _ExchangePieceDetailViewState extends State<ExchangePieceDetailView> {
                                   ),
                                 ),
                               ],
+                              if (piece.adminEstimatedPrice != null &&
+                                  piece.adminEstimatedPrice!.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  'السعر التقديري للقطعة:',
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF0D9488),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0FDFA),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: const Color(0xFF99F6E4),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.monetization_on_rounded,
+                                        color: Color(0xFF0D9488),
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${piece.adminEstimatedPrice} ل.س',
+                                        style: GoogleFonts.cairo(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color(0xFF0F766E),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                               SizedBox(height: 12),
 
                               // Media
@@ -831,8 +876,86 @@ class _ExchangePieceDetailViewState extends State<ExchangePieceDetailView> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                _buildContactSection(),
-                                SizedBox(height: 14),
+                                _buildContactSection(
+                                  title: 'إذا أعجبك أحد العروض تواصل معنا',
+                                ),
+                                const SizedBox(height: 14),
+                              ] else if (request.status.toLowerCase() ==
+                                      'approved' ||
+                                  request.status.toLowerCase() ==
+                                      'completed') ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0FDF4),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFBBF7D0),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: Color(0xFF16A34A),
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'تمت الموافقة على طلب الاستبدال! يمكنك التواصل معنا مباشرة لاستكمال إجراءات الاستبدال وتحديد القطعة المناسبة.',
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF166534),
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                _buildContactSection(
+                                  title: 'تواصل معنا لإتمام عملية الاستبدال',
+                                ),
+                                const SizedBox(height: 14),
+                              ] else if (request.status.toLowerCase() ==
+                                  'pending') ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFFBEB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFFDE68A),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.hourglass_top_rounded,
+                                        color: Color(0xFFD97706),
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'طلبك قيد المراجعة والدراسة من قبل الإدارة. سيتم تزويدك بالعروض والتواصل معك قريباً.',
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF92400E),
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
                               ],
                             ],
                           ),

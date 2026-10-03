@@ -1,22 +1,25 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:salhly/configs/app_colors.dart';
-import 'package:salhly/core/utils/ui_utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'dart:convert';
-import 'package:record/record.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../../app.dart';
+import '../../../core/utils/ui_utils.dart';
+import '../../service/widgets/maintenance_success_dialog.dart';
 import '../controller/home_controller.dart';
+import '../sell_requests/sell_requests_view.dart';
+import 'home_navigation_view.dart';
 
 class SellPieceView extends StatefulWidget {
   const SellPieceView({super.key});
@@ -31,7 +34,8 @@ class _SellPieceViewState extends State<SellPieceView> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  List<File> _images = [];
+  final List<File> _images = [];
+  String _selectedCurrency = 'SYP';
   bool _isLoading = false;
 
   // Audio recording & playback
@@ -41,46 +45,68 @@ class _SellPieceViewState extends State<SellPieceView> {
   bool isRecording = false;
   bool isPlaying = false;
 
-  // recording timer
+  // Recording timer
   Duration recordingDuration = Duration.zero;
   Timer? _recordTimer;
 
-  // playback tracking
+  // Playback tracking
   Duration playbackDuration = Duration.zero;
   Duration playbackPosition = Duration.zero;
   StreamSubscription<Duration?>? _durationSub;
   StreamSubscription<Duration>? _positionSub;
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _descriptionController.dispose();
+    _recordTimer?.cancel();
+    _durationSub?.cancel();
+    _positionSub?.cancel();
+    _audioPlayer.dispose();
+    _recorder.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     final source = await Get.bottomSheet<ImageSource?>(
       Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
         ),
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.black87),
-              title: const Text('التصوير بالكاميرا'),
+              leading: const Icon(Icons.camera_alt_outlined, color: Colors.blue),
+              title: Text(
+                'التقاط صورة بالكاميرا',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+              ),
               onTap: () => Get.back(result: ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.black87),
-              title: const Text('اختيار من المعرض'),
+              leading: const Icon(Icons.photo_library_outlined, color: Colors.blue),
+              title: Text(
+                'اختيار من المعرض',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+              ),
               onTap: () => Get.back(result: ImageSource.gallery),
             ),
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.close, color: Colors.redAccent),
-              title: const Text(
+              title: Text(
                 'إلغاء',
-                style: TextStyle(color: Colors.redAccent),
+                style: GoogleFonts.cairo(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               onTap: () => Get.back(result: null),
             ),
@@ -95,7 +121,7 @@ class _SellPieceViewState extends State<SellPieceView> {
 
     if (source == ImageSource.gallery) {
       final pickedFiles = await picker.pickMultiImage();
-      if (pickedFiles != null) {
+      if (pickedFiles.isNotEmpty) {
         setState(() {
           _images.addAll(pickedFiles.map((e) => File(e.path)));
         });
@@ -144,9 +170,7 @@ class _SellPieceViewState extends State<SellPieceView> {
         });
       });
       setState(() {});
-    } catch (e, st) {
-      print('startRecording error: $e');
-      print(st);
+    } catch (e) {
       showAppSnackbar('خطأ', 'فشل بدء التسجيل');
     }
   }
@@ -161,9 +185,7 @@ class _SellPieceViewState extends State<SellPieceView> {
         audioFilePath = path;
       }
       setState(() {});
-    } catch (e, st) {
-      print('stopRecording error: $e');
-      print(st);
+    } catch (e) {
       showAppSnackbar('خطأ', 'فشل إيقاف التسجيل');
     }
   }
@@ -196,9 +218,7 @@ class _SellPieceViewState extends State<SellPieceView> {
       });
 
       await _audioPlayer.play(DeviceFileSource(audioFilePath!));
-    } catch (e, st) {
-      print('playAudio error: $e');
-      print(st);
+    } catch (e) {
       isPlaying = false;
       setState(() {});
       showAppSnackbar('خطأ', 'فشل تشغيل الملف الصوتي');
@@ -211,30 +231,50 @@ class _SellPieceViewState extends State<SellPieceView> {
       isPlaying = false;
       playbackPosition = Duration.zero;
       setState(() {});
-    } catch (e, st) {
-      print('stopAudio error: $e');
-      print(st);
-    }
+    } catch (_) {}
   }
 
-  Future<void> seekAudio(Duration position) async {
-    try {
-      await _audioPlayer.seek(position);
-      playbackPosition = position;
-      setState(() {});
-    } catch (e, st) {
-      print('seekAudio error: $e');
-      print(st);
-    }
+  void deleteAudio() {
+    stopAudio();
+    setState(() {
+      audioFilePath = null;
+      playbackPosition = Duration.zero;
+      playbackDuration = Duration.zero;
+      recordingDuration = Duration.zero;
+    });
   }
 
   String get recordingDurationStr {
     final minutes = recordingDuration.inMinutes.toString().padLeft(2, '0');
-    final seconds = (recordingDuration.inSeconds % 60).toString().padLeft(
-      2,
-      '0',
-    );
+    final seconds = (recordingDuration.inSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+
+  String _formatDuration(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  String get _whatsappNumber {
+    if (Get.isRegistered<HomeController>()) {
+      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
+    }
+    return '';
+  }
+
+  Future<void> _openWhatsApp() async {
+    final wa = _whatsappNumber.replaceAll(RegExp(r'[\s\-\(\)+]'), '');
+    if (wa.isEmpty) {
+      showAppSnackbar('تنبيه', 'رقم الواتساب غير متوفر حالياً');
+      return;
+    }
+    final uri = Uri.parse('https://wa.me/$wa');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      showAppSnackbar('خطأ', 'تعذر فتح تطبيق الواتساب', isError: true);
+    }
   }
 
   Future<void> _submitForm() async {
@@ -243,10 +283,10 @@ class _SellPieceViewState extends State<SellPieceView> {
     }
 
     if (!_formKey.currentState!.validate()) {
-      if (_nameController.text.isEmpty) {
+      if (_nameController.text.trim().isEmpty) {
         showAppSnackbar('تحقق', 'يرجى إدخال اسم القطعة', isError: true);
         return;
-      } else if (_priceController.text.isEmpty) {
+      } else if (_priceController.text.trim().isEmpty) {
         showAppSnackbar('تحقق', 'يرجى إدخال السعر المتوقع', isError: true);
         return;
       } else {
@@ -281,12 +321,12 @@ class _SellPieceViewState extends State<SellPieceView> {
         if (token != null) 'Authorization': 'Bearer $token',
       });
 
-      // fields
-      request.fields['pieces[0]'] = _nameController.text;
-      request.fields['pieces[0][expected_price]'] = _priceController.text;
-      request.fields['pieces[0][description]'] = _descriptionController.text;
+      request.fields['pieces[0]'] = _nameController.text.trim();
+      request.fields['pieces[0][expected_price]'] = _priceController.text.trim();
+      request.fields['pieces[0][description]'] = _descriptionController.text.trim();
+      request.fields['pieces[0][currency]'] = _selectedCurrency;
 
-      // attach audio if present
+      // Audio
       if (audioFilePath != null) {
         final audioFile = File(audioFilePath!);
         if (await audioFile.exists()) {
@@ -298,12 +338,10 @@ class _SellPieceViewState extends State<SellPieceView> {
               contentType: MediaType('audio', 'm4a'),
             ),
           );
-        } else {
-          print('Audio file does not exist: $audioFilePath');
         }
       }
 
-      // attach images
+      // Images
       for (int i = 0; i < _images.length; i++) {
         final imageFile = _images[i];
         if (await imageFile.exists()) {
@@ -317,47 +355,54 @@ class _SellPieceViewState extends State<SellPieceView> {
         }
       }
 
-      // Logging request summary
-      try {
-        print('Submitting sell request to: ${request.url}');
-        print('Headers: ${request.headers}');
-        print('Fields: ${request.fields}');
-        print('Files count: ${request.files.length}');
-      } catch (_) {}
-
       var response = await request.send();
       var responseData = await response.stream.bytesToString();
 
-      print('Sell submit response status: ${response.statusCode}');
-      // Truncate long HTML responses in logs
-      final truncated = responseData.length > 200
-          ? responseData.substring(0, 200) + '... (truncated)'
-          : responseData;
-      print('Sell submit response body (truncated): $truncated');
-
-      // Try parse JSON; if it's not JSON, handle gracefully
       dynamic data;
       try {
         data = jsonDecode(responseData);
-      } on FormatException catch (fe) {
-        print('submitForm parse error: $fe');
+      } catch (_) {
         showAppSnackbar(
           'خطأ',
-          'الخادم أعاد استجابة غير متوقعة (صفحة HTML أو خطأ).',
+          'استجابة غير متوقعة من الخادم.',
           isError: true,
         );
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         return;
       }
 
-      final successMessage = data['message'] ?? 'تم إرسال طلب البيع بنجاح';
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        showAppSnackbar('نجح', successMessage);
-        await Future.delayed(const Duration(seconds: 3));
-        Get.back();
+        _nameController.clear();
+        _priceController.clear();
+        _descriptionController.clear();
+        _selectedCurrency = 'SYP';
+        _images.clear();
+        deleteAudio();
+        setState(() => _isLoading = false);
+
+        Get.dialog(
+          MaintenanceSuccessDialog(
+            tagText: 'تم استلام طلب البيع',
+            title: 'شكراً لاختيارك صلحلي',
+            subtitle:
+                'طلبك قيد المراجعة والتقييم من قبل فريقنا، وسيتم التواصل معك بأسرع وقت.',
+            bannerTitle: 'تقييم فوري وعادل',
+            bannerHeader: 'أفضل سعر لقطعتك مع صلحلي 💼',
+            bannerDesc:
+                'ندرس تفاصيل وحالة القطعة بدقة لتقديم أفضل عرض شراء لك.',
+            primaryButtonText: 'طلبات البيع',
+            onPrimaryPressed: () {
+              Get.back(); // close dialog
+              Get.back(); // exit SellPieceView
+              Get.to(() => const SellRequestsView());
+            },
+            onHomePressed: () {
+              Get.offAll(() => const HomeNavigationView());
+            },
+          ),
+          barrierDismissible: false,
+        );
+        return;
       } else {
         showAppSnackbar(
           'خطأ',
@@ -365,702 +410,916 @@ class _SellPieceViewState extends State<SellPieceView> {
           isError: true,
         );
       }
-    } catch (e, st) {
-      print('submitForm error: $e');
-      print(st);
+    } catch (e) {
       showAppSnackbar('خطأ', 'حدث خطأ أثناء الإرسال', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  String get _whatsappNumber {
-    if (Get.isRegistered<HomeController>()) {
-      return Get.find<HomeController>().contactUsModel?.phoneNumber ?? '';
-    }
-    return '';
-  }
-
-  Future<void> _openWhatsApp() async {
-    final wa = _whatsappNumber;
-    if (wa.isEmpty) return;
-    await launchUrl(Uri.parse('https://wa.me/$wa'));
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
-    _descriptionController.dispose();
-    _recordTimer?.cancel();
-    _durationSub?.cancel();
-    _positionSub?.cancel();
-    _audioPlayer.dispose();
-    _recorder.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final mainColor = AppColors.four;
+    const primaryColor = Colors.blue;
+
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned.fill(child: Container(color: Colors.white)),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.35,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.blue,
-                    Colors.blue.withOpacity(0.55),
-                    Colors.white,
-                  ],
-                  stops: const [0.0, 0.6, 1.0],
-                ),
-              ),
-            ),
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: primaryColor,
+        title: Text(
+          'بيع قطعتك',
+          style: GoogleFonts.cairo(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 17.5,
           ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Stack(
+        children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 40),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'بيع قطعتك',
-                        style: GoogleFonts.cairo(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 35),
-
-                  Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(25),
-                          child: Image(
-                            image: AssetImage('assets/images/12.jpg'),
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25),
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.four.withOpacity(0.6),
-                                AppColors.four,
-                              ],
-                            ),
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 20),
-                            Container(
-                              margin: EdgeInsets.only(right: 15),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(25),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                  width: 0.8,
-                                ),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.white.withOpacity(0.1),
-                                    Colors.white.withOpacity(0.2),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(25),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                    sigmaX: 10,
-                                    sigmaY: 10,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 7,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.sell,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                        SizedBox(width: 5),
-                                        Text(
-                                          "بيع قطعتك بسهولة",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 5),
-                            Padding(
-                              padding: EdgeInsets.only(left: 20, right: 20),
-                              child: Text(
-                                "املأ البيانات وأرفق صور وتسجيل صوتي إن أمكن",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 15),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Personal info card
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'البيانات الأساسية',
-                            style: GoogleFonts.cairo(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _nameController,
-                            decoration: InputDecoration(
-                              labelText: 'اسم القطعة',
-                              prefixIcon: Icon(
-                                Icons.inventory,
-                                color: AppColors.four,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.four.withOpacity(0.04),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: AppColors.four),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value?.isEmpty ?? true) {
-                                return 'يرجى إدخال اسم القطعة';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            controller: _priceController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'السعر المتوقع',
-                              prefixIcon: Icon(
-                                Icons.attach_money,
-                                color: AppColors.four,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.four.withOpacity(0.04),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: AppColors.four),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value?.isEmpty ?? true) {
-                                return 'يرجى إدخال السعر المتوقع';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
+                  // 1. Top Banner
+                  _buildTopBanner(primaryColor),
                   const SizedBox(height: 14),
 
-                  // Details card
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 1,
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'تفاصيل إضافية',
-                            style: GoogleFonts.cairo(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                  // 2. Item Info Card
+                  _buildBasicInfoCard(primaryColor),
+                  const SizedBox(height: 14),
 
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                            itemCount: _images.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index == _images.length) {
-                                return GestureDetector(
-                                  onTap: _pickImages,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: AppColors.four.withOpacity(0.5),
-                                        width: 2,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.add_photo_alternate,
-                                          color: AppColors.four,
-                                          size: 32,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'اضافة صورة',
-                                          style: GoogleFonts.cairo(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.four,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }
+                  // 3. Description Card
+                  _buildDescriptionCard(primaryColor),
+                  const SizedBox(height: 14),
 
-                              return Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(
-                                      _images[index],
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: GestureDetector(
-                                      onTap: () => _removeImage(index),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.red.withOpacity(0.9),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.2,
-                                              ),
-                                              blurRadius: 4,
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Padding(
-                                          padding: EdgeInsets.all(4.0),
-                                          child: Icon(
-                                            Icons.close,
-                                            color: Colors.white,
-                                            size: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
+                  // 4. Attachments Card
+                  _buildAttachmentsCard(primaryColor),
+                  const SizedBox(height: 14),
 
-                          const SizedBox(height: 12),
-                          // Audio recording section
-                          Text(
-                            'تسجيل صوتي (اختياري)',
-                            style: GoogleFonts.cairo(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
+                  // 5. Notice Card
+                  _buildNoticeCard(primaryColor),
+                  const SizedBox(height: 20),
 
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: isRecording
-                                        ? stopRecording
-                                        : startRecording,
-                                    child: Container(
-                                      width: 72,
-                                      height: 72,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: mainColor.withOpacity(0.5),
-                                          width: 2,
-                                        ),
-                                        color: isRecording
-                                            ? Colors.red.withOpacity(0.1)
-                                            : Colors.grey.shade100,
-                                      ),
-                                      child: Center(
-                                        child: Icon(
-                                          isRecording ? Icons.stop : Icons.mic,
-                                          size: 28,
-                                          color: isRecording
-                                              ? Colors.red
-                                              : mainColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (!isRecording &&
-                                      audioFilePath != null) ...[
-                                    const SizedBox(width: 10),
-                                    Stack(
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        Container(
-                                          width: 72,
-                                          height: 72,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                            color: Colors.grey.shade100,
-                                            border: Border.all(
-                                              color: mainColor.withOpacity(0.5),
-                                              width: 2,
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: IconButton(
-                                              onPressed: isPlaying
-                                                  ? stopAudio
-                                                  : playAudio,
-                                              icon: Icon(
-                                                isPlaying
-                                                    ? Icons.pause_circle_filled
-                                                    : Icons.play_circle_fill,
-                                                color: mainColor,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          top: -6,
-                                          right: -6,
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                audioFilePath = null;
-                                                isPlaying = false;
-                                                playbackPosition =
-                                                    Duration.zero;
-                                                playbackDuration =
-                                                    Duration.zero;
-                                              });
-                                            },
-                                            child: Container(
-                                              width: 28,
-                                              height: 28,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.red,
-                                                border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 1.5,
-                                                ),
-                                              ),
-                                              child: const Icon(
-                                                Icons.close,
-                                                size: 16,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                isRecording
-                                    ? 'جاري التسجيل: $recordingDurationStr'
-                                    : audioFilePath != null
-                                    ? 'مدة التسجيل: $recordingDurationStr'
-                                    : 'اضغط على الميكروفون لتسجيل صوت',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
+                  // 6. Submit Button
+                  _buildSubmitButton(primaryColor),
+                  const SizedBox(height: 12),
 
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _descriptionController,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              hintText: 'اكتب وصفاً قصيراً للقطعة...',
-                              prefixIcon: Icon(
-                                Icons.note,
-                                color: AppColors.four,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.four.withOpacity(0.04),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: AppColors.four),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  mainColor.withOpacity(0.97),
-                                  mainColor.withOpacity(0.80),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: mainColor.withOpacity(0.13),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white24,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.info,
-                                    color: Colors.white,
-                                    size: 28,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'ملاحظة',
-                                        style: GoogleFonts.cairo(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'عند الوصف بشكل دقيق و ارفاق صورة و صوت يمكننا تقدير السعر بشكل أفضل',
-                                        style: GoogleFonts.cairo(
-                                          color: Colors.white70,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Submit button
-                          Center(
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _submitForm,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: mainColor,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: Text(
-                                  _isLoading
-                                      ? 'جارٍ الإرسال...'
-                                      : 'إرسال الطلب',
-                                  style: GoogleFonts.cairo(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Center(
-                            child: Text(
-                              'أو',
-                              style: GoogleFonts.cairo(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _openWhatsApp,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF25D366),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                foregroundColor: Colors.white,
-                              ),
-                              child: Text(
-                                'تواصل على واتس اب',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // 7. WhatsApp Button
+                  _buildWhatsAppButton(),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
           ),
+
+          // Loading Overlay
           if (_isLoading)
             Container(
-              color: Colors.black26,
+              color: Colors.black.withValues(alpha: 0.35),
               child: Center(
-                child: CircularProgressIndicator(color: AppColors.four),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 22,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 16,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(color: primaryColor),
+                      const SizedBox(height: 16),
+                      Text(
+                        'جارٍ إرسال طلب البيع...',
+                        style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
         ],
       ),
+    );
+  }
+
+  // 1. Top Summary Banner
+  Widget _buildTopBanner(Color primaryColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.monetization_on_outlined,
+              color: primaryColor,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'بيع قطعتك بسهولة',
+                  style: GoogleFonts.cairo(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                Text(
+                  'املأ البيانات وأرفق صور القطعة لتخمين السعر والشراء منك فوراً',
+                  style: GoogleFonts.cairo(
+                    fontSize: 11.5,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 2. Basic Info Card
+  Widget _buildBasicInfoCard(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                color: primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'بيانات القطعة',
+                style: GoogleFonts.cairo(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Name Input
+          _buildInputField(
+            controller: _nameController,
+            label: 'اسم ونوع القطعة',
+            hint: 'مثال: كمبروسر مكيف، موتور غسالة...',
+            icon: Icons.sell_outlined,
+            primaryColor: primaryColor,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'يرجى إدخال اسم القطعة'
+                : null,
+          ),
+          const SizedBox(height: 14),
+
+          // Currency Selector
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.currency_exchange_rounded,
+                    color: primaryColor,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'عملة السعر المطلوب',
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF334155),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    // SYP Option
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedCurrency = 'SYP';
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          decoration: BoxDecoration(
+                            color: _selectedCurrency == 'SYP'
+                                ? primaryColor
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: _selectedCurrency == 'SYP'
+                                ? [
+                                    BoxShadow(
+                                      color: primaryColor.withValues(alpha: 0.3),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '🇸🇾 ليرة سورية (SYP)',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: _selectedCurrency == 'SYP'
+                                      ? Colors.white
+                                      : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // USD Option
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedCurrency = 'USD';
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          decoration: BoxDecoration(
+                            color: _selectedCurrency == 'USD'
+                                ? primaryColor
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: _selectedCurrency == 'USD'
+                                ? [
+                                    BoxShadow(
+                                      color: primaryColor.withValues(alpha: 0.3),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '💵 دولار أمريكي (USD)',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: _selectedCurrency == 'USD'
+                                      ? Colors.white
+                                      : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Price Input
+          _buildInputField(
+            controller: _priceController,
+            label: _selectedCurrency == 'USD'
+                ? 'السعر المتوقع (بالدولار الأمريكي \$)'
+                : 'السعر المتوقع (بالليرة السورية)',
+            hint: _selectedCurrency == 'USD'
+                ? 'أدخل السعر المطلوب بالدولار (مثال: 100)'
+                : 'أدخل السعر المطلوب بالليرة (مثال: 1500000)',
+            icon: Icons.payments_outlined,
+            keyboardType: TextInputType.number,
+            primaryColor: primaryColor,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'يرجى إدخال السعر المتوقع'
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. Problem / Item Description Card
+  Widget _buildDescriptionCard(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.description_outlined,
+                color: primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'حالة ووصف القطعة (اختياري)',
+                style: GoogleFonts.cairo(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _descriptionController,
+            maxLines: 3,
+            style: GoogleFonts.cairo(fontSize: 13.5),
+            decoration: InputDecoration(
+              hintText: 'اذكر حالة القطعة (مستعملة، بحالة جيدة، تحتاج صيانة خفيفة)...',
+              hintStyle: GoogleFonts.cairo(
+                fontSize: 12.5,
+                color: Colors.grey.shade400,
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              contentPadding: const EdgeInsets.all(12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: primaryColor, width: 1.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. Attachments Card
+  Widget _buildAttachmentsCard(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Photos Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.photo_camera_back_outlined,
+                    color: primaryColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'صور القطعة',
+                    style: GoogleFonts.cairo(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              if (_images.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${_images.length} صور',
+                    style: GoogleFonts.cairo(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Photos Grid
+          SizedBox(
+            height: 75,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: _images.length + 1,
+              itemBuilder: (context, index) {
+                if (index == _images.length) {
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      _pickImages();
+                    },
+                    child: Container(
+                      width: 75,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            color: primaryColor,
+                            size: 24,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'إضافة صورة',
+                            style: GoogleFonts.cairo(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final file = _images[index];
+                return Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          file,
+                          width: 75,
+                          height: 75,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 3,
+                        right: 3,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 18),
+          Divider(color: Colors.grey.shade100, height: 1),
+          const SizedBox(height: 14),
+
+          // Audio Header
+          Row(
+            children: [
+              Icon(
+                Icons.mic_none_rounded,
+                color: primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'تسجيل صوتي (اختياري)',
+                style: GoogleFonts.cairo(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Audio Controls
+          if (audioFilePath != null && !isRecording)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: isPlaying ? stopAudio : playAudio,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'تم حفظ التسجيل الصوتي',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        Text(
+                          isPlaying
+                              ? '${_formatDuration(playbackPosition)} / ${_formatDuration(playbackDuration)}'
+                              : 'جاهز للإرسال مع الطلب',
+                          style: GoogleFonts.cairo(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: deleteAudio,
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                isRecording ? stopRecording() : startRecording();
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isRecording
+                      ? const Color(0xFFFEE2E2)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isRecording
+                        ? Colors.redAccent
+                        : primaryColor.withValues(alpha: 0.35),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isRecording
+                          ? Icons.stop_circle_rounded
+                          : Icons.mic_rounded,
+                      color: isRecording ? Colors.redAccent : primaryColor,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isRecording
+                          ? 'جارٍ التسجيل: $recordingDurationStr (اضغط للإيقاف)'
+                          : 'اضغط لتسجيل صوتي يشرح حالة القطعة',
+                      style: GoogleFonts.cairo(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: isRecording
+                            ? Colors.redAccent
+                            : primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 5. Reassurance Notice Card
+  Widget _buildNoticeCard(Color primaryColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            color: primaryColor,
+            size: 22,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'عند الوصف بشكل دقيق وإرفاق صور واضحة وتسجيل صوتي، يمكننا تقدير السعر والتواصل معك بشكل أسرع.',
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                color: const Color(0xFF1E40AF),
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 6. Submit Button
+  Widget _buildSubmitButton(Color primaryColor) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isLoading
+            ? null
+            : () {
+                HapticFeedback.heavyImpact();
+                _submitForm();
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 2,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.send_rounded, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              'إرسال طلب البيع',
+              style: GoogleFonts.cairo(
+                fontSize: 15.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 7. WhatsApp Button
+  Widget _buildWhatsAppButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton(
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          _openWhatsApp();
+        },
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          backgroundColor: const Color(0xFF25D366).withValues(alpha: 0.06),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: Color(0xFF16A34A),
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'تواصل عبر واتساب للتفاوض المباشر',
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF16A34A),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required Color primaryColor,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          validator: validator,
+          style: GoogleFonts.cairo(fontSize: 13.5),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.cairo(
+              fontSize: 12.5,
+              color: Colors.grey.shade400,
+            ),
+            prefixIcon: Icon(icon, color: primaryColor, size: 20),
+            filled: true,
+            fillColor: const Color(0xFFF8FAFC),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
